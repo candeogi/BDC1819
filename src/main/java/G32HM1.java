@@ -1,19 +1,14 @@
-import edu.stanford.nlp.coref.statistical.StatisticalCorefAlgorithm;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.mllib.linalg.Vector;
-import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
-import org.apache.spark.mllib.stat.Statistics;
-import org.apache.spark.rdd.RDD;
 
-import java.io.DataOutput;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
 
 public class G32HM1 {
 
@@ -52,8 +47,8 @@ public class G32HM1 {
         s.close();
 
         //setup spark local
-        //setMaster("local") can be removed if set on run configuration
-        SparkConf configuration = new SparkConf(true).setAppName("G32HM1").setMaster("local");
+        //setMaster("local") can be added if not set on vm options
+        SparkConf configuration = new SparkConf(true).setAppName("G32HM1");
 
         JavaSparkContext sparkContext = new JavaSparkContext(configuration);
 
