@@ -63,8 +63,12 @@ public class G32HM1 {
         double maxNumberMax = dNumbers.max(new valueComparator());
         System.out.println("Max method: the max number is "+maxNumberMax);
 
+        //find the min value used for normalization
+        double minNumberMin = dNumbers.min(new valueComparator());
+        System.out.println("min: "+minNumberMin);
+
         //creates a RDD of normalized numbers
-        JavaRDD<Double> dNormalized = dNumbers.map(x -> x/maxNumberReduce);
+        JavaRDD<Double> dNormalized = dNumbers.map(x -> (x-minNumberMin)/(maxNumberMax-minNumberMin));
 
         /*
         The following code compute and print median value of the RDD dNormalized
