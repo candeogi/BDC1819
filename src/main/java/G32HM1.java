@@ -1,7 +1,6 @@
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
@@ -10,6 +9,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
+
+/**
+ * Group 32
+ * File for the Homework n.1 of "Big Data Computing" Course"
+ * The following file:
+ * 1-reads an input file of non negative doubles into a RDD
+ * 2-computes and prints the maximum value in 2 ways
+ * 3-creates a RDD of normalized values
+ * 4-computes and prints the mean value using count and collect methods
+ *
+ * @author Giovanni Candeo 1206150
+ * @author Nicolo Levorato 1156744
+ *
+ */
 public class G32HM1 {
 
     private static Double findMax(Double x, Double y) {
@@ -65,30 +78,30 @@ public class G32HM1 {
 
         //find the min value used for normalization
         double minNumberMin = dNumbers.min(new valueComparator());
-        System.out.println("min: "+minNumberMin);
 
         //creates a RDD of normalized numbers
         JavaRDD<Double> dNormalized = dNumbers.map(x -> (x-minNumberMin)/(maxNumberMax-minNumberMin));
 
         /*
-        The following code compute and print median value of the RDD dNormalized
+        The following code compute and print mean value of the RDD dNormalized
         */
 
         //count how many elements contains
         long count = dNormalized.count();
-        System.out.println("RDD contains "+count+" objects");
+
+        // I could use this but instead lets use the collect method
+        // double sum = dNormalized.reduce((x,y) -> x+y);
 
         //sum the value of all elements
         double sum = 0;
         List<Double> lNormalized = dNormalized.collect();
         for(Double listElement: lNormalized){
-                    //System.out.println(listElement);
                     sum += listElement;
         }
 
-        //compute the median value
-        double media = sum/count;
-        System.out.println("Il valore medio è: "+media);
+        //compute the mean value
+        double mean = sum/count;
+        System.out.println("The mean value is: "+mean);
 
     }
 
