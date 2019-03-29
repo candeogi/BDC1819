@@ -3,15 +3,15 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.execution.columnar.LONG;
 import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-public class SecondTemplate {
+public class SecondTemplateRemake {
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -28,39 +28,15 @@ public class SecondTemplate {
         long start = System.currentTimeMillis();
         /* Measuring time of this code  */
 
-        /*
-        JavaPairRDD<String, Long> wordcountpairs =
-                docs.mapToPair(SecondTemplate::WordCountTest).groupByKey().mapValues(SecondTemplate::ReduceFunction);
-         */
-
         JavaPairRDD<String, Long> wordcountpairs = docs
-                // Map phase
-                .flatMapToPair((document) -> {
-                    String[] tokens = document.split(" ");
-                    HashMap<String, Long> counts = new HashMap<>();
-                    ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-                    for (String token : tokens) {
-                        counts.put(token, 1L + counts.getOrDefault(token, 0L));
-                    }
-                    for (Map.Entry<String, Long> e : counts.entrySet()) {
-                        pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-                    }
-                    return pairs.iterator();
-                })
-                // Reduce phase
-                .groupByKey()
-                .mapValues((it) -> {
-                    long sum = 0;
-                    for (long c : it) {
-                        sum += c;
-                    }
-                    return sum;
-                });
+                        .flatMapToPair(SecondTemplateRemake::WordCountTest)
+                        .groupByKey()
+                        .mapValues(SecondTemplateRemake::ReduceFunction);
+
 
         /* Measuring time of the code above */
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: "+(end-start)+" ms.");
-
 
         System.out.println("press enter to finish the program");
         try{
@@ -71,15 +47,8 @@ public class SecondTemplate {
 
     }
 
-    /*
-    private static <U> U ReduceFunction(Iterable<Object> objects) {
-    }
-     */
-
-
-    /*
-    private static <String, Long> Tuple2<String, Long> WordCountTest(String document) {
-        String[] tokens = (String[]) document.toString().split(" ");
+    private static <K2, V2> Iterator<Tuple2<String, Long>> WordCountTest(String document) {
+        String[] tokens = document.split(" ");
         HashMap<String, Long> counts = new HashMap<>();
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
         for (String token : tokens) {
@@ -88,8 +57,16 @@ public class SecondTemplate {
         for (Map.Entry<String, Long> e : counts.entrySet()) {
             pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
-        return (Tuple2<String, Long>) pairs.iterator();
+        return pairs.iterator();
     }
-     */
+
+    private static Long ReduceFunction(Iterable<Long> iterable) {
+        long sum = 0;
+        for(long c: iterable){
+            sum += c;
+        }
+        return sum;
+    }
+
 }
 
