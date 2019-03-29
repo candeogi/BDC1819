@@ -23,8 +23,14 @@ public class SecondTemplateRemake {
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
+
+        //preload the file
         JavaRDD<String> docs = sc.textFile(args[0]).cache();
         docs.count();
+
+        //doesnt load the file
+        //JavaRDD<String> docs = sc.textFile(args[0]);
+
         long start = System.currentTimeMillis();
         /* Measuring time of this code  */
 
@@ -33,8 +39,10 @@ public class SecondTemplateRemake {
                         .groupByKey()
                         .mapValues(SecondTemplateRemake::ReduceFunction);
 
+        System.out.println("wordcountpairs count "+wordcountpairs.count());
 
         /* Measuring time of the code above */
+
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: "+(end-start)+" ms.");
 
@@ -50,7 +58,9 @@ public class SecondTemplateRemake {
     private static <K2, V2> Iterator<Tuple2<String, Long>> WordCountTest(String document) {
         String[] tokens = document.split(" ");
         HashMap<String, Long> counts = new HashMap<>();
+        //pairs è un arraylist di tuple
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+        //conto for each token
         for (String token : tokens) {
             counts.put(token, 1L + counts.getOrDefault(token, 0L));
         }
