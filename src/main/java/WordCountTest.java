@@ -34,9 +34,20 @@ public class WordCountTest {
 
 
         //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
-        Object a = document.flatMapToPair(WordCountTest::countSingleWords);
+        JavaPairRDD<String,Long> wordcountpairs = document
+                .flatMapToPair(WordCountTest::countSingleWords)
+                .groupByKey()
+                .mapValues(WordCountTest::countOccurrences);
 
 
+    }
+
+    private static <U> Long countOccurrences(Iterable<Long> iterable) {
+        Long sum = Long.valueOf(0);
+        for(Long c: iterable){
+            sum += c;
+        }
+        return sum;
     }
 
 
