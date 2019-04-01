@@ -32,18 +32,22 @@ public class WordCountTest {
         JavaRDD<String> document = sc.textFile(args[0]);
         System.out.println("TEST COUNT: "+document.count());
 
-        JavaRDD<String, Long> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
+
+        Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
 
 
     }
 
-    private static <K2, V2> Iterator<Tuple2<String,Long>> countSingleWords(String s) {
+
+    private static <K2,V2> Iterator<Tuple2<K2,V2>> countSingleWords(String s) {
         String[] words = s.split(" ");
-        ArrayList<Tuple2<String, Long>> counts = new ArrayList<>();
+        ArrayList<Tuple2<K2, V2>> counts = new ArrayList<>();
         for(String w : words){
             counts.append(new Tuple2<>(w,1));
         }
         return counts.iterator();
     }
+
+
 }
 
