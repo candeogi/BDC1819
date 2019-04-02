@@ -46,7 +46,9 @@ public class WordCount1 {
 
         //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
         JavaPairRDD<String,Long> dWordCountPairs = document
-                .flatMapToPair(WordCount1::countSingleWords)
+                .repartition(k)
+                .glom()
+                .mapPartitionsToPair(WordCount1::countSingleWords)
                 .reduceByKey(Long::sum);
 
         //end of time measuring
