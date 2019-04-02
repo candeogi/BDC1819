@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * WordCount2
@@ -12,6 +13,9 @@ import java.util.*;
  * @author Giovanni Candeo
  */
 public class WordCount2_1 {
+
+    private static long docWordOccurrences = 3503570;
+
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -19,7 +23,7 @@ public class WordCount2_1 {
         }
 
         SparkConf conf=new SparkConf(true)
-                .setAppName("WordCountTest")
+                .setAppName("WordCount2")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
@@ -29,8 +33,8 @@ public class WordCount2_1 {
         // #words 3503570
 
         //RDD contains 10122 docs composed by a single line of numerous strings
-        JavaRDD<String> document = sc.textFile(args[0]).cache();
-        System.out.println("Test count: "+document.count());
+        JavaRDD<String> collection = sc.textFile(args[0]).cache();
+        System.out.println("Test count: "+collection.count());
 
         //number of partitions K, received as an input in the command line
         int k = Integer.parseInt(args[1]);
@@ -38,16 +42,25 @@ public class WordCount2_1 {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
-        JavaPairRDD<String,Long> dWordCountPairs = document
+        JavaPairRDD<String,Long> dWordCountPairs =collection
                 .repartition(k)
                 .glom()
+                .mapPartitions(WordCount2_1::test);
+        /*
+        JavaPairRDD<Long,Iterable<List<String>>> dWordCountPairs = collection
+                .repartition(k)
+                .glom()
+                .groupBy(WordCount2_1::assignRandomKey);
+        */
+                /*.reduceByKey((iterableOfString)->{
+                    //iterableOfString contains all documents
+                })
                 .flatMapToPair(WordCount2_1::countSingleWords)
-                .reduceByKey(Long::sum);
+                .reduceByKey(Long::sum);*/
 
         //i need this for computing the actual RDD transformation
         dWordCountPairs.cache();
-        dWordCountPairs.count();
+        System.out.println("ASD TEST COUNT:" +dWordCountPairs.count());
 
         //end of time measuring
         long end = System.currentTimeMillis();
@@ -70,6 +83,16 @@ public class WordCount2_1 {
         */
     }
 
+    private static Iterator<String> test(List<String> stringIterator) {
+        for(String wtfisthis : stringIterator){
+
+        }
+    }
+
+    private static Long assignRandomKey(List<String> strings) {
+        return ThreadLocalRandom.current().nextLong(0,  docWordOccurrences);
+    }
+
     private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
         HashMap<String,Long> counts = new HashMap<>();
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
@@ -83,5 +106,6 @@ public class WordCount2_1 {
         }
         return pairs.iterator();
     }
+
 }
 
