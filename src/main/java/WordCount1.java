@@ -7,10 +7,7 @@ import scala.Tuple2;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * WordCount1
@@ -56,6 +53,8 @@ public class WordCount1 {
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 
+        System.out.println("ASDASD COUNT: "+dWordCountPairs.count());
+
         /*
         //print the word count just to visualize
         //steel must be 127
@@ -70,16 +69,21 @@ public class WordCount1 {
         PrintWriter printWriter = new PrintWriter(fileWriter);
         printWriter.print(lWordCountPairs.toString());
         printWriter.close();
-         */
-
+        */
     }
 
     private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
-        ArrayList<Tuple2<String, Long>> counts = new ArrayList<>();
-        for(String word : documentsPartition){
-            counts.add(new Tuple2<>(word,1L));
+        HashMap<String,Long> counts = new HashMap<>();
+        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+        for(String partitionDoc : documentsPartition){
+            for(String token : partitionDoc.split(" ")) {
+                counts.put(token, 1L + counts.getOrDefault(token, 0L));
+            }
         }
-        return counts.iterator();
+        for(Map.Entry<String,Long> e: counts.entrySet()){
+            pairs.add(new Tuple2<>(e.getKey(),e.getValue()));
+        }
+        return pairs.iterator();
     }
 }
 
