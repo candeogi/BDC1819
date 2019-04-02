@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,7 +49,7 @@ public class WordCount1 {
         JavaPairRDD<String,Long> dWordCountPairs = document
                 .repartition(k)
                 .glom()
-                .mapPartitionsToPair(WordCount1::countSingleWords)
+                .flatMapToPair(WordCount1::countSingleWords)
                 .reduceByKey(Long::sum);
 
         //end of time measuring
@@ -57,6 +58,7 @@ public class WordCount1 {
 
         /*
         //print the word count just to visualize
+        //steel must be 127
         Map<String, Long> lWordCountPairs = dWordCountPairs.collectAsMap();
         //System.out.println(lWordCountPairs.toString());
         FileWriter fileWriter = null;
@@ -68,16 +70,14 @@ public class WordCount1 {
         PrintWriter printWriter = new PrintWriter(fileWriter);
         printWriter.print(lWordCountPairs.toString());
         printWriter.close();
-        */
+         */
+
     }
 
-
-    private static Iterator<Tuple2<String,Long>> countSingleWords(String s) {
-        String[] words = s.split(" ");
+    private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
         ArrayList<Tuple2<String, Long>> counts = new ArrayList<>();
-        for(String w : words){
-
-            counts.add(new Tuple2<>(w,1L));
+        for(String word : documentsPartition){
+            counts.add(new Tuple2<>(word,1L));
         }
         return counts.iterator();
     }
