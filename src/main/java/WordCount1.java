@@ -49,11 +49,13 @@ public class WordCount1 {
                 .flatMapToPair(WordCount1::countSingleWords)
                 .reduceByKey(Long::sum);
 
+        //i need this for computing the actual RDD transformation
+        dWordCountPairs.cache();
+        dWordCountPairs.count();
+
         //end of time measuring
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
-
-        System.out.println("ASDASD COUNT: "+dWordCountPairs.count());
 
         /*
         //print the word count just to visualize
