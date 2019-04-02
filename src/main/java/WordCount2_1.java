@@ -4,17 +4,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 /**
- * WordCount1
- *
+ * WordCount2
+ * version 1
  * @author Giovanni Candeo
  */
-public class WordCount1 {
+public class WordCount2_1 {
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -45,7 +42,7 @@ public class WordCount1 {
         JavaPairRDD<String,Long> dWordCountPairs = document
                 .repartition(k)
                 .glom()
-                .flatMapToPair(WordCount1::countSingleWords)
+                .flatMapToPair(WordCount2_1::countSingleWords)
                 .reduceByKey(Long::sum);
 
         //i need this for computing the actual RDD transformation
