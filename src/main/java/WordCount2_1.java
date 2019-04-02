@@ -42,10 +42,11 @@ public class WordCount2_1 {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
+        /*
         JavaPairRDD<String,Long> dWordCountPairs =collection
                 .repartition(k)
                 .glom()
-                .mapPartitions(WordCount2_1::test);
+                .mapPartitions(WordCount2_1::test);*/
         /*
         JavaPairRDD<Long,Iterable<List<String>>> dWordCountPairs = collection
                 .repartition(k)
@@ -59,9 +60,11 @@ public class WordCount2_1 {
                 .reduceByKey(Long::sum);*/
 
         //i need this for computing the actual RDD transformation
+        /*
         dWordCountPairs.cache();
-        System.out.println("ASD TEST COUNT:" +dWordCountPairs.count());
 
+        System.out.println("ASD TEST COUNT:" +dWordCountPairs.count());
+        */
         //end of time measuring
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
@@ -83,11 +86,6 @@ public class WordCount2_1 {
         */
     }
 
-    private static Iterator<String> test(List<String> stringIterator) {
-        for(String wtfisthis : stringIterator){
-
-        }
-    }
 
     private static Long assignRandomKey(List<String> strings) {
         return ThreadLocalRandom.current().nextLong(0,  docWordOccurrences);
