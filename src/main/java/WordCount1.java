@@ -15,6 +15,16 @@ import java.util.*;
  * @author Giovanni Candeo
  */
 public class WordCount1 {
+
+    public static void waitabit(){
+        System.out.println("press enter to finish the program");
+        try{
+            System.in.read();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -34,7 +44,6 @@ public class WordCount1 {
         //RDD contains 10122 docs composed by a single line of numerous strings
         JavaRDD<String> document = sc.textFile(args[0]).cache();
         System.out.println("Test count: "+document.count());
-
         //number of partitions K, received as an input in the command line
         int k = Integer.parseInt(args[1]);
 
@@ -42,15 +51,17 @@ public class WordCount1 {
         long start = System.currentTimeMillis();
 
         //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
-        JavaPairRDD<String,Long> dWordCountPairs = document
-                .repartition(k)
-                .glom()
-                .flatMapToPair(WordCount1::countSingleWords)
-                .reduceByKey(Long::sum);
+        JavaPairRDD<String,Long> dWordCountPairs =document
+            .repartition(k)
+            .glom()
+            .flatMapToPair(WordCount1::countSingleWords)
+            .reduceByKey(Long::sum);
 
         //i need this for computing the actual RDD transformation
         dWordCountPairs.cache();
         dWordCountPairs.count();
+
+        //waitabit();
 
         //end of time measuring
         long end = System.currentTimeMillis();

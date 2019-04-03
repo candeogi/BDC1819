@@ -12,6 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SecondTemplate {
+
+    public static void waitabit(){
+        System.out.println("press enter to finish the program");
+        try{
+            System.in.read();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -34,6 +44,7 @@ public class SecondTemplate {
          */
 
         JavaPairRDD<String, Long> wordcountpairs = docs
+                .repartition(4)
                 // Map phase
                 .flatMapToPair((document) -> {
                     String[] tokens = document.split(" ");
@@ -57,17 +68,11 @@ public class SecondTemplate {
                     return sum;
                 });
 
+        wordcountpairs.count();
+        waitabit();
         /* Measuring time of the code above */
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: "+(end-start)+" ms.");
-
-
-        System.out.println("press enter to finish the program");
-        try{
-            System.in.read();
-        }catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
