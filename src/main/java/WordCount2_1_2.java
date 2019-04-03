@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * version 1
  * @author Giovanni Candeo
  */
-public class WordCount2_1 {
+public class WordCount2_1_2 {
 
     private static long docWordOccurrences = 3503570;
     private static int k = 0;
@@ -56,11 +56,10 @@ public class WordCount2_1 {
 
         List<String> collectcollection = collection.collect();
 
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1::countSingleWordsFromString);
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1::assignRandomKey);
+        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1_2::countSingleWordsFromString);
+        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1_2::assignRandomKey);
         //fine map phase 1
-        //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collect = subsetByKey.collect();
-
+        List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collect = subsetByKey.collect();
         waitabit();
 
         //end of time measuring
@@ -83,7 +82,7 @@ public class WordCount2_1 {
         printWriter.close();
         */
     }
-
+    
 
     private static int assignRandomKey(Tuple2<String, Long> stringLongTuple2) {
         return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));

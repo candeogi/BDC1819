@@ -46,16 +46,15 @@ public class WordCount1 {
         System.out.println("Test count: "+document.count());
         //number of partitions K, received as an input in the command line
         int k = Integer.parseInt(args[1]);
+        document.repartition(k);
 
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
-        JavaPairRDD<String,Long> dWordCountPairs =document
-            .repartition(k)
-            .glom()
-            .flatMapToPair(WordCount1::countSingleWords)
-            .reduceByKey(Long::sum);
+        JavaPairRDD<String,Long> dWordCountPairs =document.flatMapToPair(WordCount1::countSingleWordsFromString);
+        List<Tuple2<String, Long>> collectmp = dWordCountPairs.collect();
+        JavaPairRDD<String, Long> dwordcountreduced = dWordCountPairs.reduceByKey(Long::sum);
+        List<Tuple2<String, Long>> collectreduce = dwordcountreduced.collect();
 
         //i need this for computing the actual RDD transformation
         dWordCountPairs.cache();
@@ -84,16 +83,15 @@ public class WordCount1 {
         */
     }
 
-    private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
-        HashMap<String,Long> counts = new HashMap<>();
+    private static Iterator<Tuple2<String,Long>> countSingleWordsFromString(String documentsPartition) {
+        String[] tokens = documentsPartition.split(" ");
+        HashMap<String, Long> counts = new HashMap<>();
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-        for(String partitionDoc : documentsPartition){
-            for(String token : partitionDoc.split(" ")) {
-                counts.put(token, 1L + counts.getOrDefault(token, 0L));
-            }
+        for (String token : tokens) {
+            counts.put(token, 1L + counts.getOrDefault(token, 0L));
         }
-        for(Map.Entry<String,Long> e: counts.entrySet()){
-            pairs.add(new Tuple2<>(e.getKey(),e.getValue()));
+        for (Map.Entry<String, Long> e : counts.entrySet()) {
+            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
         return pairs.iterator();
     }
