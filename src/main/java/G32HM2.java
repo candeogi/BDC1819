@@ -117,11 +117,11 @@ public class G32HM2 {
                 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 
         /*
-        //We can print also with
+        //We can print also with - WATCH OUT: output are big files!
         printWordCount(dWordCount1Pairs,"wc1output.txt");
         printWordCount(dWordCount2Pairs,"wc2_1output.txt");
-        printWordCount(dWordCount2Pairs2,"wc2_2output.txt")
-         */
+        printWordCount(dWordCount2Pairs2,"wc2_2output.txt");
+        */
     }
 
     /**
@@ -218,7 +218,6 @@ public class G32HM2 {
      */
     private static void printWordCount(JavaPairRDD<String,Long> dWordCountPairsRDD, String filename){
         Map<String, Long> lWordCountPairs = dWordCountPairsRDD.collectAsMap();
-        //System.out.println(lWordCountPairs.toString());
         FileWriter fileWriter = null;
         try {
             fileWriter = new FileWriter(filename);
