@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * WordCount2
  * version 1
+ * groupBy -> flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
 public class WordCount2_1_part {
@@ -75,7 +76,6 @@ public class WordCount2_1_part {
                 .groupBy(WordCount2_1_part::assignRandomKey2)
                 .flatMapToPair(WordCount2_1_part::wordCountInPartition)
                 .reduceByKey(Long::sum);
-
 
         dWordCount2partition.cache();
         System.out.println(dWordCount2partition.count());

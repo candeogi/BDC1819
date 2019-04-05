@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * WordCount2
  * version 1
+ * flatmaptopair -> grouby -> flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
 public class WordCount2_1 {

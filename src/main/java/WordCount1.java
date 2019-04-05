@@ -11,7 +11,7 @@ import java.util.*;
 
 /**
  * WordCount1
- *
+ * flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
 public class WordCount1 {
