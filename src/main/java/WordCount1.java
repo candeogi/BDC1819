@@ -51,14 +51,13 @@ public class WordCount1 {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        JavaPairRDD<String,Long> dWordCountPairs =document.flatMapToPair(WordCount1::countSingleWordsFromString);
-        List<Tuple2<String, Long>> collectmp = dWordCountPairs.collect();
-        JavaPairRDD<String, Long> dwordcountreduced = dWordCountPairs.reduceByKey(Long::sum);
-        List<Tuple2<String, Long>> collectreduce = dwordcountreduced.collect();
+        JavaPairRDD<String,Long> dWordCountPairs =document
+                .flatMapToPair(WordCount1::countSingleWordsFromString)
+                .reduceByKey(Long::sum);
 
         //i need this for computing the actual RDD transformation
         dWordCountPairs.cache();
-        dWordCountPairs.count();
+        System.out.println(dWordCountPairs.count());
 
         //waitabit();
 

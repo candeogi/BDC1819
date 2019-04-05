@@ -2,6 +2,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.codehaus.janino.Java;
 import scala.Tuple2;
 
 import javax.naming.NoInitialContextException;
@@ -55,36 +56,35 @@ public class WordCount2_1 {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
+        /* LONG VERSION WITH COLLECT METHODS FOR DEBUGGING
+
         //collection already takes single Strings/Documents parallelized
-        List<String> coolCalmAndCollected= collection.collect();
+        //List<String> coolCalmAndCollected= collection.collect();
+
         JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1::countSingleWordsFromString);
-        List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
+        //List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
+
         //assign a random key to each document
         JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1::assignRandomKey);
-        List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
-//        JavaPairRDD<Integer, Tuple2<String, Long>> setbykeyaggregatedcount = subsetByKey.flatMapValues(WordCount2_1::test2);
-//        List<Tuple2<Integer, Tuple2<String, Long>>> collectedaggregated = setbykeyaggregatedcount.collect();
+        //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
 
         JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1::test3);
-        List<Tuple2<String, Long>> collectedWordCountWordKey = wordCountWordKey.collect();
+        //List<Tuple2<String, Long>> collectedWordCountWordKey = wordCountWordKey.collect();
 
         JavaPairRDD<String, Long> asdasd = wordCountWordKey.reduceByKey(Long::sum);
-        List<Tuple2<String, Long>> asdasdasd = asdasd.collect();
+        //List<Tuple2<String, Long>> asdasdasd = asdasd.collect();
+        */
 
-        /*
-        List<String> collectcollection = collection.collect();
-        //extract the single words from every document
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1::countSingleWordsFromString);
-        List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
-        //assign a random key to each document
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1::assignRandomKey);
-        List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
-        //fine map phase 1
-         */
+        JavaPairRDD<String, Long> dWordCount2Pairs = collection
+                .flatMapToPair(WordCount2_1::countSingleWordsFromDocString)
+                .groupBy(WordCount2_1::assignRandomKey)
+                .flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets)
+                .reduceByKey(Long::sum);
 
-        //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collect = subsetByKey.collect();
-        //JavaPairRDD<String, Long> wordCountOfKeyX = subsetByKey.flatMapToPair(WordCount2_1::test);
-        waitabit();
+        dWordCount2Pairs.cache();
+        System.out.println(dWordCount2Pairs.count());
+
+        //waitabit();
 
         //end of time measuring
         long end = System.currentTimeMillis();
@@ -107,41 +107,7 @@ public class WordCount2_1 {
         */
     }
 
-    private static Iterator<Tuple2<String,Long>> test3(Tuple2<Integer, Iterable<Tuple2<String, Long>>> keyWordCountPairs) {
-        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-        HashMap<String,Long> sumOfWordCount = new HashMap<>();
-        for(Tuple2<String,Long> wcPair : keyWordCountPairs._2){
-            sumOfWordCount.put(wcPair._1(), sumOfWordCount.getOrDefault(wcPair._1(), 0L)+wcPair._2());
-        }
-        for (Map.Entry<String, Long> e : sumOfWordCount.entrySet()) {
-            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-        }
-        return pairs.iterator();
-    }
-
-    private static Iterable<Tuple2<String,Long>> test2(Iterable<Tuple2<String, Long>> wordCountPairs) {
-        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-        HashMap<String,Long> sumOfWordCount = new HashMap<>();
-        for(Tuple2<String,Long> wcPair : wordCountPairs){
-            sumOfWordCount.put(wcPair._1(), sumOfWordCount.getOrDefault(wcPair._1(), 0L)+wcPair._2());
-        }
-        for (Map.Entry<String, Long> e : sumOfWordCount.entrySet()) {
-            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-        }
-        return pairs;
-
-    }
-
-    private static int assignRandomKey(Tuple2<String, Long> stringLongTuple2) {
-        return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));
-    }
-
-    private static int assignRandomKey2(String s) {
-        return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));
-    }
-
-
-    private static Iterator<Tuple2<String,Long>> countSingleWordsFromString(String documentsPartition) {
+    private static Iterator<Tuple2<String,Long>> countSingleWordsFromDocString(String documentsPartition) {
         String[] tokens = documentsPartition.split(" ");
         HashMap<String, Long> counts = new HashMap<>();
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
@@ -154,18 +120,21 @@ public class WordCount2_1 {
         return pairs.iterator();
     }
 
-    private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
-        HashMap<String,Long> counts = new HashMap<>();
+    private static int assignRandomKey(Tuple2<String, Long> stringLongTuple2) {
+        return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));
+    }
+
+    private static Iterator<Tuple2<String,Long>> sumWOccurrencesOfKSubsets(Tuple2<Integer, Iterable<Tuple2<String, Long>>> keyWordCountPairs) {
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-        for(String partitionDoc : documentsPartition){
-            for(String token : partitionDoc.split(" ")) {
-                counts.put(token, 1L + counts.getOrDefault(token, 0L));
-            }
+        HashMap<String,Long> sumOfWordCount = new HashMap<>();
+        for(Tuple2<String,Long> wcPair : keyWordCountPairs._2){
+            sumOfWordCount.put(wcPair._1(), sumOfWordCount.getOrDefault(wcPair._1(), 0L)+wcPair._2());
         }
-        for(Map.Entry<String,Long> e: counts.entrySet()){
-            pairs.add(new Tuple2<>(e.getKey(),e.getValue()));
+        for (Map.Entry<String, Long> e : sumOfWordCount.entrySet()) {
+            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
         return pairs.iterator();
     }
+
 }
 
