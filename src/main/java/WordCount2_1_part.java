@@ -2,13 +2,12 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.execution.columnar.LONG;
+import org.codehaus.janino.Java;
 import scala.Tuple2;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -52,7 +51,7 @@ public class WordCount2_1_part {
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
-        collection.repartition(k);
+        //collection.repartition(k);
 
         //lets start measuring time from here
         long start = System.currentTimeMillis();
@@ -62,6 +61,32 @@ public class WordCount2_1_part {
         //collection already takes single Strings/Documents parallelized
         //List<String> coolCalmAndCollected= collection.collect();
 
+        /*
+        //-----------NEW STUFF
+        JavaPairRDD<Long, Iterable<String>> docWassignedKey = collection.repartition(k).groupBy(WordCount2_1_part::assignRandomKey2);
+        //List<Tuple2<Long, Iterable<String>>> collectedDocWassignedKey = docWassignedKey.collect();
+        docWassignedKey.count();
+
+        JavaPairRDD<String,Long> wordCountWordKeyPart =  docWassignedKey.flatMapToPair(WordCount2_1_part::wordCountInPartition);
+        //List<Tuple2<String, Long>> collectcountwordkeypart = wordCountWordKeyPart.collect();
+        wordCountWordKeyPart.count();
+
+        JavaPairRDD<String, Long> dWordCount2partition = wordCountWordKeyPart.reduceByKey(Long::sum);
+        //List<Tuple2<String, Long>> dWordCount2partitioncollected = dWordCount2partition.collect();
+        //------------FINISH NEW STUFF
+        */
+
+        JavaPairRDD<String, Long> dWordCount2partition = collection
+                .groupBy(WordCount2_1_part::assignRandomKey2)
+                .flatMapToPair(WordCount2_1_part::wordCountInPartition)
+                .reduceByKey(Long::sum);
+
+
+        dWordCount2partition.cache();
+        System.out.println(dWordCount2partition.count());
+
+
+        /*
         JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1_part::countSingleWordsFromDocString);
         //List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
 
@@ -69,7 +94,7 @@ public class WordCount2_1_part {
                 .mapPartitionsToPair(WordCount2_1_part::countSingleWordsFromDocStringPart, true);
 
         //assign a random key to each document
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDDpart.groupBy(WordCount2_1_part::assignRandomKey);
+        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1_part::assignRandomKey);
         //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
 
         JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1_part::sumWOccurrencesOfKSubsets);
@@ -77,7 +102,7 @@ public class WordCount2_1_part {
 
         JavaPairRDD<String, Long> dWordCount2Pairs = wordCountWordKey.reduceByKey(Long::sum);
         //List<Tuple2<String, Long>> dWordCount2PairsCollected = dWordCount2Pairs.collect();
-
+        */
 
         /*
         JavaPairRDD<String, Long> dWordCount2Pairs = collection
@@ -87,8 +112,13 @@ public class WordCount2_1_part {
                 .reduceByKey(Long::sum);
         */
 
+        /*
+
         dWordCount2Pairs.cache();
         System.out.println(dWordCount2Pairs.count());
+
+        */
+
 
         waitabit();
 
@@ -112,6 +142,30 @@ public class WordCount2_1_part {
         printWriter.close();
         */
     }
+
+    /**
+     * questo metodo lavora direttamente sulla singole partitions in parallelo
+     * @param partition contiene (x,[W1,W2,...,Wk])
+     *                           dove la x  è random key
+     *                           [W1,W2 .. ] è la partizione di doc a cui è stata assegnata la key
+     * @return ritorna nuove coppie in cui la word è la chiave.
+     */
+    private static Iterator<Tuple2<String, Long>> wordCountInPartition(Tuple2<Long, Iterable<String>> partition) {
+        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+        HashMap<String, Long> counts = new HashMap<>();
+        //per ogni documento conto le parole
+        for(String document: partition._2()){
+            String[] tokens = document.split(" ");
+            for (String token : tokens) {
+                counts.put(token, 1L + counts.getOrDefault(token, 0L));
+            }
+        }
+        for (Map.Entry<String, Long> e : counts.entrySet()) {
+            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+        }
+        return pairs.iterator();
+    }
+
 
     private static Iterator<Tuple2<String,Long>> countSingleWordsFromDocStringPart(Iterator<String> docPartIterator) {
         HashMap<String, Long> counts = new HashMap<>();
@@ -144,6 +198,10 @@ public class WordCount2_1_part {
 
     private static int assignRandomKey(Tuple2<String, Long> stringLongTuple2) {
         return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));
+    }
+
+    private static Long assignRandomKey2(String s) {
+        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
 
     private static Iterator<Tuple2<String,Long>> sumWOccurrencesOfKSubsets(Tuple2<Integer, Iterable<Tuple2<String, Long>>> keyWordCountPairs) {
