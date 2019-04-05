@@ -59,7 +59,6 @@ public class WordCount2_1_fst {
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
-        collection.repartition(k);
 
         //lets start measuring time from here
         long start = System.currentTimeMillis();
@@ -71,8 +70,8 @@ public class WordCount2_1_fst {
 
 
         JavaPairRDD<String, Long> testRDD =  collection
-                .groupBy(WordCount2_1_fst::assignRandomKey2)
-                .mapPartitionsToPair(WordCount2_1_fst::mppartitionstopair);
+                .repartition(k)
+                .mapPartitionsToPair(WordCount2_1_fst::wordCountInPartition);
 
         dWordCount2partition.cache();
         System.out.println(dWordCount2partition.count());
@@ -88,42 +87,33 @@ public class WordCount2_1_fst {
     }
 
     /**
-     * this function can access single partitions with the iterator given by parameter
-     * @param partitionIterator iterator of single partitions, can access single partitions.
-     * @return
-     */
-    private static Iterator<Tuple2<String,Long>> mppartitionstopair(Iterator<Tuple2<Long, Iterable<String>>> partitionIterator) {
-        HashMap<String,Long> wordCountInCollection = new HashMap<>();
+     * this function operate on single partitions
+     * @param documentsPartitioned single partition of documents.
+     * @return word count occurrences in the partition
+     **/
+    private static Iterator<Tuple2<String,Long>> wordCountInPartition(Iterator<String> documentsPartitioned) {
+        HashMap<String,Long> wordCountInPartition = new HashMap<>();
 
-        //do this for every partition
-        while(partitionIterator.hasNext()){
-            Iterable<String> documentsPartitioned = partitionIterator.next()._2();
-            HashMap<String,Long> wordCountInPartition = new HashMap<>();
+        //i need this to return a correct iterator
+        ArrayList<Tuple2<String,Long>> wordCountIterator = new ArrayList<>();
 
-            //for each document in the documents partition do ...
-            for(String document: documentsPartitioned){
-                HashMap<String,Long> wordCountInDocument = new HashMap<>();
-                String[] tokens = document.split(" ");
-                for(String token : tokens){
-                    wordCountInDocument.merge(token,1L,Long::sum);
-                }
-                //document has been wordcounted, time to update the main value
-                for (Map.Entry<String, Long> e : wordCountInDocument.entrySet()) {
-                    wordCountInDocument.merge(e.getKey(),e.getValue(),Long::sum);
-                }
-                //repeat for each document
+        //per ogni documento della partizione conto le occorrenze di parole e aggiorno a fine ciclo il conteggio principale
+        while(documentsPartitioned.hasNext()){
+            HashMap<String,Long> wordCountInDocument = new HashMap<>();
+            String[] tokens = documentsPartitioned.next().split(" ");
+            //count word occurrences in document
+            for(String token : tokens){
+                wordCountInDocument.merge(token,1L,Long::sum);
             }
-
-            //wordcountinpartition contains all the partition's words counted
-            for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {
+            //document has been wordcounted, time to update the main value
+            for (Map.Entry<String, Long> e : wordCountInDocument.entrySet()) {
                 wordCountInPartition.merge(e.getKey(),e.getValue(),Long::sum);
             }
         }
-        //wordcountinpartition contains all the partition's words counted
-        for (Map.Entry<String, Long> e : wordCountInCollection.entrySet()) {
-            wordCountInCollection.merge(e.getKey(),e.getValue(),Long::sum);
+        for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {
+            wordCountIterator.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
-        return wordCountInCollection.entrySet().iterator();
+        return wordCountIterator.iterator();
     }
 
     /**
