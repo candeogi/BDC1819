@@ -14,8 +14,19 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * WordCount2
- * version 1
+ * WordCount2 - Version 2
+ *
+ * This variant that does not explicitly assign random keys but exploits the subdivision of docs into K parts in
+ * combination with mapPartitionToPair to access each partition separately.
+ * Again, K is the value given in input.
+ * Note that if docs was initially partitioned into K parts, then, even after transformations that act on individual
+ * elements,the resulting RDD stays partitioned into K parts and you may exploit this partition.
+ * However, you can also invoke repartition(K) to reshuffle the RDD elements at random.
+ *
+ * The test-sample file contains documents composed by a single line of words.
+ * #docs 10122
+ * #words 3503570
+ *
  * groupBy -> flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
@@ -24,6 +35,11 @@ public class WordCount2_1_fst {
     private static long docWordOccurrences = 3503570;
     private static int k = 0;
 
+    /**
+     * Main method
+     * @param args args[0] contains the name of the file txt we want to count
+     *             args[1] contains the number of k partitions
+     */
     public static void main(String[] args){
 
         if(args.length == 0){
@@ -35,10 +51,6 @@ public class WordCount2_1_fst {
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
-
-        //the test-sample file contains documents composed by a single line of words.
-        // #docs 10122
-        // #words 3503570
 
         //RDD contains 10122 docs composed by a single line of numerous strings
         JavaRDD<String> collection = sc.textFile(args[0]).cache();
@@ -64,15 +76,29 @@ public class WordCount2_1_fst {
         //end of time measuring
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
+
         printWordCount(dWordCount2partition);
 
     }
 
     /**
-     * questo metodo lavora direttamente sulla singole partitions in parallelo
-     * @param partition contiene (x,[W1,W2,...,Wk])
-     *                           dove la x  è random key
-     *                           [W1,W2 .. ] è la partizione di doc a cui è stata assegnata la key
+     * Assigns a random key value at the input document
+     *
+     * @param s document
+     * @return random key value between 0 and sqrt(k)
+     */
+    private static Long assignRandomKey2(String s) {
+        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
+    }
+
+    /**
+     * This function is applied only to the single partition.
+     * Counts and Sums the occurrences of words within a partition of documents.
+     * Basically implements the first round of Word Count 2
+     *
+     * @param partition contains(x,[W1,W2,...,Wk])
+     *                  where x is a random key
+     *                  [W1,W2 .. ] is the partition of docs with assigned key
      * @return ritorna nuove coppie in cui la word è la chiave.
      */
     private static Iterator<Tuple2<String, Long>> wordCountInPartition(Tuple2<Long, Iterable<String>> partition) {
@@ -120,10 +146,6 @@ public class WordCount2_1_fst {
             pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
         return pairs.iterator();
-    }
-
-    private static Long assignRandomKey2(String s) {
-        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
 
     private static Iterator<Tuple2<String,Long>> sumWOccurrencesOfKSubsets(Tuple2<Integer, Iterable<Tuple2<String, Long>>> keyWordCountPairs) {
