@@ -2,12 +2,13 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.codehaus.janino.Java;
 import scala.Tuple2;
 
-import javax.naming.NoInitialContextException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -15,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * version 1
  * @author Giovanni Candeo
  */
-public class WordCount2_1 {
+public class WordCount2_1_part {
 
     private static long docWordOccurrences = 3503570;
     private static int k = 0;
@@ -56,34 +57,35 @@ public class WordCount2_1 {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        /* LONG VERSION WITH COLLECT METHODS FOR DEBUGGING
+        /* LONG VERSION WITH COLLECT METHODS FOR DEBUGGING */
 
         //collection already takes single Strings/Documents parallelized
         //List<String> coolCalmAndCollected= collection.collect();
 
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1::countSingleWordsFromDocString);
+        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1_part::countSingleWordsFromDocString);
         //List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
 
+        JavaPairRDD<String, Long> singleWordsRDDpart = collection
+                .mapPartitionsToPair(WordCount2_1_part::countSingleWordsFromDocStringPart, true);
+
         //assign a random key to each document
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1::assignRandomKey);
+        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDDpart.groupBy(WordCount2_1_part::assignRandomKey);
         //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
 
-        JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets);
+        JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1_part::sumWOccurrencesOfKSubsets);
         //List<Tuple2<String, Long>> collectedWordCountWordKey = wordCountWordKey.collect();
 
         JavaPairRDD<String, Long> dWordCount2Pairs = wordCountWordKey.reduceByKey(Long::sum);
         //List<Tuple2<String, Long>> dWordCount2PairsCollected = dWordCount2Pairs.collect();
 
-        */
 
-
-
+        /*
         JavaPairRDD<String, Long> dWordCount2Pairs = collection
                 .flatMapToPair(WordCount2_1::countSingleWordsFromDocString)
                 .groupBy(WordCount2_1::assignRandomKey)
                 .flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets)
                 .reduceByKey(Long::sum);
-
+        */
 
         dWordCount2Pairs.cache();
         System.out.println(dWordCount2Pairs.count());
@@ -109,6 +111,22 @@ public class WordCount2_1 {
         printWriter.print(lWordCountPairs.toString());
         printWriter.close();
         */
+    }
+
+    private static Iterator<Tuple2<String,Long>> countSingleWordsFromDocStringPart(Iterator<String> docPartIterator) {
+        HashMap<String, Long> counts = new HashMap<>();
+        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+        while(docPartIterator.hasNext()){
+            String documentsPartition = docPartIterator.next();
+            String[] tokens = documentsPartition.split(" ");
+            for (String token : tokens) {
+                counts.put(token, 1L + counts.getOrDefault(token, 0L));
+            }
+            for (Map.Entry<String, Long> e : counts.entrySet()) {
+                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+            }
+        }
+        return pairs.iterator();
     }
 
     private static Iterator<Tuple2<String,Long>> countSingleWordsFromDocString(String documentsPartition) {
