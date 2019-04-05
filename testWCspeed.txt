@@ -39,3 +39,21 @@ WordCount2_2:
 7172
 7404
 6634
+-------------------------------
+@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
+Improved count 1: 5719 ms
+Improved count 2.1: 2788 ms
+Improved count 2.2: 2488 ms
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
+Improved count 1: 6296 ms
+Improved count 2.1: 3414 ms
+Improved count 2.2: 2124 ms
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
+Improved count 1: 5924 ms
+Improved count 2.1: 3481 ms
+Improved count 2.2: 1941 ms
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
