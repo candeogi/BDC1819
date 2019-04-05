@@ -1,4 +1,3 @@
-import org.apache.hadoop.util.hash.Hash;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -31,7 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * groupBy -> flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
-public class WordCount2_1_fst {
+public class WordCount2_2 {
 
     private static long docWordOccurrences = 3503570;
     private static int k = 0;
@@ -65,7 +64,7 @@ public class WordCount2_1_fst {
 
         JavaPairRDD<String, Long> dWordCount2partition =  collection
                 .repartition(k)
-                .mapPartitionsToPair(WordCount2_1_fst::wordCountInPartition)
+                .mapPartitionsToPair(WordCount2_2::wordCountInPartition)
                 .reduceByKey(Long::sum);
 
         dWordCount2partition.cache();
