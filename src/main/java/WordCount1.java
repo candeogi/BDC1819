@@ -46,22 +46,22 @@ public class WordCount1 {
         System.out.println("Test count: "+document.count());
         //number of partitions K, received as an input in the command line
         int k = Integer.parseInt(args[1]);
-        document.repartition(k);
 
-        //lets start measuring time from here
+        //-------------TIME MEASURE START ------------------
         long start = System.currentTimeMillis();
 
         JavaPairRDD<String,Long> dWordCountPairs =document
+                .repartition(k)
                 .flatMapToPair(WordCount1::countSingleWordsFromString)
                 .reduceByKey(Long::sum);
 
         //i need this for computing the actual RDD transformation
         dWordCountPairs.cache();
-        System.out.println(dWordCountPairs.count());
+        dWordCountPairs.count();
 
         //waitabit();
 
-        //end of time measuring
+        //-------------TIME MEASURE END --------------------
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 

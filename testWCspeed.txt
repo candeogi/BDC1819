@@ -7,6 +7,8 @@ wordcount2 partition test:
 circa 3.5s
 
 wordcount2 partition test:
-
 16 partition, time: 6326ms
 circa 6.3s
+
+wordcount2 versione 2 test:
+16 or 4 partition, time 6 sec circa

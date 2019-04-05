@@ -52,46 +52,23 @@ public class WordCount2_1 {
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
-        collection.repartition(k);
 
-        //lets start measuring time from here
+        //-------------TIME MEASURE START ------------------
         long start = System.currentTimeMillis();
 
-        /* LONG VERSION WITH COLLECT METHODS FOR DEBUGGING
-
-        //collection already takes single Strings/Documents parallelized
-        //List<String> coolCalmAndCollected= collection.collect();
-
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1::countSingleWordsFromDocString);
-        //List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
-
-        //assign a random key to each document
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1::assignRandomKey);
-        //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
-
-        JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets);
-        //List<Tuple2<String, Long>> collectedWordCountWordKey = wordCountWordKey.collect();
-
-        JavaPairRDD<String, Long> dWordCount2Pairs = wordCountWordKey.reduceByKey(Long::sum);
-        //List<Tuple2<String, Long>> dWordCount2PairsCollected = dWordCount2Pairs.collect();
-
-        */
-
-
-
         JavaPairRDD<String, Long> dWordCount2Pairs = collection
+                .repartition(k)
                 .flatMapToPair(WordCount2_1::countSingleWordsFromDocString)
                 .groupBy(WordCount2_1::assignRandomKey)
                 .flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets)
                 .reduceByKey(Long::sum);
 
-
         dWordCount2Pairs.cache();
-        System.out.println(dWordCount2Pairs.count());
+        dWordCount2Pairs.count();
 
         //waitabit();
 
-        //end of time measuring
+        //-------------TIME MEASURE END --------------------
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 

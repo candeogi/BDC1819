@@ -60,29 +60,25 @@ public class WordCount2_1_fst {
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
 
-        //lets start measuring time from here
+        //-------------TIME MEASURE START ------------------
         long start = System.currentTimeMillis();
 
-        JavaPairRDD<String, Long> dWordCount2partition = collection
-                .groupBy(WordCount2_1_fst::assignRandomKey2)
-                .flatMapToPair(WordCount2_1_fst::wordCountInPartition)
+        JavaPairRDD<String, Long> dWordCount2partition =  collection
+                .repartition(k)
+                .mapPartitionsToPair(WordCount2_1_fst::wordCountInPartition)
                 .reduceByKey(Long::sum);
 
-
-        JavaPairRDD<String, Long> testRDD =  collection
-                .repartition(k)
-                .mapPartitionsToPair(WordCount2_1_fst::wordCountInPartition);
-
         dWordCount2partition.cache();
-        System.out.println(dWordCount2partition.count());
+        dWordCount2partition.count();
+        //System.out.println(dWordCount2partition.count());
 
         //waitabit();
 
-        //end of time measuring
+        //-------------TIME MEASURE END --------------------
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 
-        printWordCount(dWordCount2partition);
+        //printWordCount(dWordCount2partition);
 
     }
 

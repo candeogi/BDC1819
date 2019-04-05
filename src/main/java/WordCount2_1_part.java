@@ -52,37 +52,22 @@ public class WordCount2_1_part {
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
-        collection.repartition(k);
 
-        //lets start measuring time from here
+        //-------------TIME MEASURE START ------------------
         long start = System.currentTimeMillis();
 
-        /*
-        //-----------Long Version for debug
-        JavaPairRDD<Long, Iterable<String>> docWassignedKey = collection.repartition(k).groupBy(WordCount2_1_part::assignRandomKey2);
-        //List<Tuple2<Long, Iterable<String>>> collectedDocWassignedKey = docWassignedKey.collect();
-        docWassignedKey.count();
-
-        JavaPairRDD<String,Long> wordCountWordKeyPart =  docWassignedKey.flatMapToPair(WordCount2_1_part::wordCountInPartition);
-        //List<Tuple2<String, Long>> collectcountwordkeypart = wordCountWordKeyPart.collect();
-        wordCountWordKeyPart.count();
-
-        JavaPairRDD<String, Long> dWordCount2partition = wordCountWordKeyPart.reduceByKey(Long::sum);
-        //List<Tuple2<String, Long>> dWordCount2partitioncollected = dWordCount2partition.collect();
-        //------------FINISH NEW STUFF
-        */
-
         JavaPairRDD<String, Long> dWordCount2partition = collection
+                .repartition(k)
                 .groupBy(WordCount2_1_part::assignRandomKey2)
                 .flatMapToPair(WordCount2_1_part::wordCountInPartition)
                 .reduceByKey(Long::sum);
 
         dWordCount2partition.cache();
-        System.out.println(dWordCount2partition.count());
+        dWordCount2partition.count();
 
         //waitabit();
 
-        //end of time measuring
+        //-------------TIME MEASURE END --------------------
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 
