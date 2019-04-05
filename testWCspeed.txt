@@ -1,0 +1,12 @@
+wordcount1 test:
+16 partition, time: 2971ms
+circa 2.9s
+
+wordcount2 partition test:
+16 partition, time: 3575ms
+circa 3.5s
+
+wordcount2 partition test:
+
+16 partition, time: 6326ms
+circa 6.3s

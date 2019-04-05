@@ -88,7 +88,7 @@ public class WordCount2_1 {
         dWordCount2Pairs.cache();
         System.out.println(dWordCount2Pairs.count());
 
-        waitabit();
+        //waitabit();
 
         //end of time measuring
         long end = System.currentTimeMillis();

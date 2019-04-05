@@ -51,18 +51,13 @@ public class WordCount2_1_part {
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
-        //collection.repartition(k);
+        collection.repartition(k);
 
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        /* LONG VERSION WITH COLLECT METHODS FOR DEBUGGING */
-
-        //collection already takes single Strings/Documents parallelized
-        //List<String> coolCalmAndCollected= collection.collect();
-
         /*
-        //-----------NEW STUFF
+        //-----------Long Version for debug
         JavaPairRDD<Long, Iterable<String>> docWassignedKey = collection.repartition(k).groupBy(WordCount2_1_part::assignRandomKey2);
         //List<Tuple2<Long, Iterable<String>>> collectedDocWassignedKey = docWassignedKey.collect();
         docWassignedKey.count();
@@ -85,42 +80,7 @@ public class WordCount2_1_part {
         dWordCount2partition.cache();
         System.out.println(dWordCount2partition.count());
 
-
-        /*
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1_part::countSingleWordsFromDocString);
-        //List<Tuple2<String, Long>> collectSingleWordsRDD = singleWordsRDD.collect();
-
-        JavaPairRDD<String, Long> singleWordsRDDpart = collection
-                .mapPartitionsToPair(WordCount2_1_part::countSingleWordsFromDocStringPart, true);
-
-        //assign a random key to each document
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1_part::assignRandomKey);
-        //List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collectSubsetByKey = subsetByKey.collect();
-
-        JavaPairRDD<String, Long> wordCountWordKey = subsetByKey.flatMapToPair(WordCount2_1_part::sumWOccurrencesOfKSubsets);
-        //List<Tuple2<String, Long>> collectedWordCountWordKey = wordCountWordKey.collect();
-
-        JavaPairRDD<String, Long> dWordCount2Pairs = wordCountWordKey.reduceByKey(Long::sum);
-        //List<Tuple2<String, Long>> dWordCount2PairsCollected = dWordCount2Pairs.collect();
-        */
-
-        /*
-        JavaPairRDD<String, Long> dWordCount2Pairs = collection
-                .flatMapToPair(WordCount2_1::countSingleWordsFromDocString)
-                .groupBy(WordCount2_1::assignRandomKey)
-                .flatMapToPair(WordCount2_1::sumWOccurrencesOfKSubsets)
-                .reduceByKey(Long::sum);
-        */
-
-        /*
-
-        dWordCount2Pairs.cache();
-        System.out.println(dWordCount2Pairs.count());
-
-        */
-
-
-        waitabit();
+        //waitabit();
 
         //end of time measuring
         long end = System.currentTimeMillis();
