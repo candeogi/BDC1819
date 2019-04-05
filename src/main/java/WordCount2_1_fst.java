@@ -1,3 +1,4 @@
+import org.apache.hadoop.util.hash.Hash;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -68,6 +69,11 @@ public class WordCount2_1_fst {
                 .flatMapToPair(WordCount2_1_fst::wordCountInPartition)
                 .reduceByKey(Long::sum);
 
+
+        JavaPairRDD<String, Long> testRDD =  collection
+                .groupBy(WordCount2_1_fst::assignRandomKey2)
+                .mapPartitionsToPair(WordCount2_1_fst::mppartitionstopair);
+
         dWordCount2partition.cache();
         System.out.println(dWordCount2partition.count());
 
@@ -79,6 +85,45 @@ public class WordCount2_1_fst {
 
         printWordCount(dWordCount2partition);
 
+    }
+
+    /**
+     * this function can access single partitions with the iterator given by parameter
+     * @param partitionIterator iterator of single partitions, can access single partitions.
+     * @return
+     */
+    private static Iterator<Tuple2<String,Long>> mppartitionstopair(Iterator<Tuple2<Long, Iterable<String>>> partitionIterator) {
+        HashMap<String,Long> wordCountInCollection = new HashMap<>();
+
+        //do this for every partition
+        while(partitionIterator.hasNext()){
+            Iterable<String> documentsPartitioned = partitionIterator.next()._2();
+            HashMap<String,Long> wordCountInPartition = new HashMap<>();
+
+            //for each document in the documents partition do ...
+            for(String document: documentsPartitioned){
+                HashMap<String,Long> wordCountInDocument = new HashMap<>();
+                String[] tokens = document.split(" ");
+                for(String token : tokens){
+                    wordCountInDocument.merge(token,1L,Long::sum);
+                }
+                //document has been wordcounted, time to update the main value
+                for (Map.Entry<String, Long> e : wordCountInDocument.entrySet()) {
+                    wordCountInDocument.merge(e.getKey(),e.getValue(),Long::sum);
+                }
+                //repeat for each document
+            }
+
+            //wordcountinpartition contains all the partition's words counted
+            for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {
+                wordCountInPartition.merge(e.getKey(),e.getValue(),Long::sum);
+            }
+        }
+        //wordcountinpartition contains all the partition's words counted
+        for (Map.Entry<String, Long> e : wordCountInCollection.entrySet()) {
+            wordCountInCollection.merge(e.getKey(),e.getValue(),Long::sum);
+        }
+        return wordCountInCollection.entrySet().iterator();
     }
 
     /**
