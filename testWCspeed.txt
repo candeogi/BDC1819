@@ -12,3 +12,45 @@ circa 6.3s
 
 wordcount2 versione 2 test:
 16 or 4 partition, time 6 sec circa
+
+---------------
+Partitions 4
+
+WordCount1:
+5284
+5885
+
+WordCount2_1:
+8164
+9653
+
+WordCount2_1_part:
+4622
+5272
+5152
+
+WordCount2_2:
+5730
+6135
+5221
+
+--------------
+Partitions 16
+
+WordCount1:
+6952
+7051
+
+WordCount2_1:
+10858
+10138
+
+WordCount2_1_part:
+5980
+7609
+6321
+
+WordCount2_2:
+7172
+7404
+6634
