@@ -17,6 +17,11 @@ import java.util.concurrent.ThreadLocalRandom;
  * Group 32
  * File for the Homework n.2 of "Big Data Computing" Course"
  *
+ * This file:
+ * 1-Reads the collection of documents into an RDD docs and subdivides the into K parts;
+ * 2-Runs three MapReduce Word count algorithms and returns their individual running times, carefully measured.
+ * 3-Prints the average length of the distinct words appearing in the collection.
+ *
  * @author Giovanni Candeo 1206150
  * @author Nicolo Levorato 1156744
  *
@@ -45,10 +50,13 @@ public class G32HM2 {
 
         //RDD contains 10122 docs composed by a single line of numerous strings
         JavaRDD<String> collection = sc.textFile(args[0]).cache();
-        System.out.println("Test count: " + collection.count());
+        //System.out.println("Test count: " + collection.count());
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
+
+        //we make k partitions of the initial collection
+        JavaRDD<String> collectionRepartitioned = collection.repartition(k);
 
         ArrayList<Long> speedTest = new ArrayList<>();
         long start;
@@ -57,8 +65,7 @@ public class G32HM2 {
         /*---------Word Count 1---------*/
         start = System.currentTimeMillis();
 
-        JavaPairRDD<String,Long> dWordCount1Pairs =collection
-                .repartition(k)
+        JavaPairRDD<String,Long> dWordCount1Pairs =collectionRepartitioned
                 .flatMapToPair(G32HM2::countSingleWordsFromString)
                 .reduceByKey(Long::sum);
 
@@ -76,8 +83,7 @@ public class G32HM2 {
 
         start = System.currentTimeMillis();
 
-        JavaPairRDD<String, Long> dWordCount2Pairs = collection
-                .repartition(k)
+        JavaPairRDD<String, Long> dWordCount2Pairs = collectionRepartitioned
                 .groupBy(G32HM2::assignRandomKey)
                 .flatMapToPair(G32HM2::wordCountInPartition1)
                 .reduceByKey(Long::sum);
@@ -95,8 +101,7 @@ public class G32HM2 {
 
         start = System.currentTimeMillis();
 
-        JavaPairRDD<String, Long> dWordCount2Pairs2 =  collection
-                .repartition(k)
+        JavaPairRDD<String, Long> dWordCount2Pairs2 =  collectionRepartitioned
                 .mapPartitionsToPair(G32HM2::wordCountInPartition2)
                 .reduceByKey(Long::sum);
 
@@ -109,19 +114,26 @@ public class G32HM2 {
 
         /*-------------------------------*/
 
-        System.out.println("" +
-                "@@@@ TIME @@@ SPEED @@@ TEST @@@@@@\n" +
-                "Improved count 1: "+speedTest.get(0)+" ms\n" +
-                "Improved count 2.1: "+speedTest.get(1)+" ms\n" +
-                "Improved count 2.2: "+speedTest.get(2)+" ms\n" +
-                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-
         /*
-        //We can print also with - WATCH OUT: output are big files!
+        //We can also print the pairs with this - WATCH OUT: output are big files!
         printWordCount(dWordCount1Pairs,"wc1output.txt");
         printWordCount(dWordCount2Pairs,"wc2_1output.txt");
         printWordCount(dWordCount2Pairs2,"wc2_2output.txt");
         */
+
+        /* Prints the average length of the distinct words appearing in the documents */
+        long numberOfWoccurrences = dWordCount2Pairs2.count();
+        long entireWordLenght = dWordCount2Pairs2.map((x) -> Long.valueOf(x._1().length())).reduce(Long::sum);
+        float averageLenghtOfDistW = (float) entireWordLenght / numberOfWoccurrences;
+        System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
+
+        /* Print the time speed test */
+        System.out.println("" +
+                "\n------ Algorithm time measurement ------\n" +
+                "Improved count 1: "+speedTest.get(0)+" ms\n" +
+                "Improved count 2.1: "+speedTest.get(1)+" ms\n" +
+                "Improved count 2.2: "+speedTest.get(2)+" ms\n" +
+                "----------------------------------------");
     }
 
     /**
