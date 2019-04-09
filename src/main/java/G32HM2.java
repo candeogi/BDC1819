@@ -114,7 +114,7 @@ public class G32HM2 {
         */
 
         /* Prints the average length of the distinct words appearing in the documents */
-        long numberOfWoccurrences = dWordCount1Pairs.count();
+        long numberOfWoccurrences = dWordCount2Pairs2.count();
         long entireWordLength = dWordCount2Pairs2.map((x) -> (long) x._1().length()).reduce(Long::sum);
         float averageLenghtOfDistW = (float) entireWordLength / numberOfWoccurrences;
         System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
@@ -159,14 +159,14 @@ public class G32HM2 {
     /**
      * This function receives a subset and and count the words in that subset.
      *
-     * @param subsetbykey a subset of keys
+     * @param subsetByKey a subset of keys
      * @return word count in the subset
      */
-    private static Iterator<Tuple2<String,Long>> aggregateWCperKeySubset(Tuple2<Long, Iterable<Tuple2<String, Long>>> subsetbykey) {
-        Iterable<Tuple2<String, Long>> tuple2s = subsetbykey._2();
+    private static Iterator<Tuple2<String,Long>> aggregateWCperKeySubset(Tuple2<Long, Iterable<Tuple2<String, Long>>> subsetByKey) {
+        Iterable<Tuple2<String, Long>> tuple2s = subsetByKey._2();
         HashMap<String,Long> count = new HashMap<>();
-        for(Tuple2<String,Long> singolaCoppia : tuple2s){
-            count.merge(singolaCoppia._1(),singolaCoppia._2(),Long::sum);
+        for(Tuple2<String,Long> wordCountTuple : tuple2s){
+            count.merge(wordCountTuple._1(),wordCountTuple._2(),Long::sum);
         }
         ArrayList<Tuple2<String,Long>> pairs= new ArrayList<>();
         for(Map.Entry<String, Long> e : count.entrySet()){
