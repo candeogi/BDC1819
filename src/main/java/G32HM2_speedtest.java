@@ -7,10 +7,7 @@ import scala.Tuple2;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -204,6 +201,7 @@ public class G32HM2_speedtest {
                 wordCountInPartition.merge(e.getKey(),e.getValue(),Long::sum);
             }
         }
+
         for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {
             wordCountIterator.add(new Tuple2<>(e.getKey(), e.getValue()));
         }

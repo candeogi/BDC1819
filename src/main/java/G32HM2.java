@@ -114,8 +114,8 @@ public class G32HM2 {
         */
 
         /* Prints the average length of the distinct words appearing in the documents */
-        long numberOfWoccurrences = dWordCount2Pairs2.count();
-        long entireWordLength = dWordCount2Pairs2.map((x) -> Long.valueOf(x._1().length())).reduce(Long::sum);
+        long numberOfWoccurrences = dWordCount1Pairs.count();
+        long entireWordLength = dWordCount2Pairs2.map((x) -> (long) x._1().length()).reduce(Long::sum);
         float averageLenghtOfDistW = (float) entireWordLength / numberOfWoccurrences;
         System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
 
@@ -126,6 +126,34 @@ public class G32HM2 {
                 "Improved count 2.1: "+speedTest.get(1)+" ms\n" +
                 "Improved count 2.2: "+speedTest.get(2)+" ms\n" +
                 "----------------------------------------");
+    }
+
+    /**
+     * Count the word occurrences in a document represented by a single line of strings.
+     *
+     * @param document input document as a single string line.
+     * @return iterator of tuple composed by word and his count.
+     */
+    private static Iterator<Tuple2<String,Long>> countSingleWordsFromString(String document) {
+        String[] tokens = document.split(" ");
+        HashMap<String, Long> wordCountInDocument = new HashMap<>();
+        ArrayList<Tuple2<String, Long>> wcPairs = new ArrayList<>();
+        for (String token : tokens) {
+            wordCountInDocument.merge(token,1L,Long::sum);
+        }
+        for (Map.Entry<String, Long> e : wordCountInDocument .entrySet()) {
+            wcPairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+        }
+        return wcPairs.iterator();
+    }
+
+    /**
+     * Assigns a random key to the input document s
+     * @param s input word count pairs
+     * @return random Long value that will represent a random key.
+     */
+    private static Long assignRandomKey(Tuple2<String,Long> s){
+        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
 
     /**
@@ -145,37 +173,6 @@ public class G32HM2 {
             pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
         }
         return pairs.iterator();
-    }
-
-    /**
-     * Count the word occurrences in a document represented by a single line of strings.
-     *
-     * @param document input document as a single string line.
-     * @return iterator of tuple composed by word and his count.
-     */
-    private static Iterator<Tuple2<String,Long>> countSingleWordsFromString(String document) {
-        String[] tokens = document.split(" ");
-        HashMap<String, Long> wordCountInDocument = new HashMap<>();
-        ArrayList<Tuple2<String, Long>> wcPairs = new ArrayList<>();
-        for (String token : tokens) {
-            wordCountInDocument.put(token, 1L + wordCountInDocument .getOrDefault(token, 0L));
-        }
-        for (Map.Entry<String, Long> e : wordCountInDocument .entrySet()) {
-            wcPairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-        }
-        return wcPairs.iterator();
-    }
-
-    /**
-     * Assigns a random key to the input document s
-     * @param s input document s
-     * @return random Long value that will represent a random key.
-     */
-    private static Long assignRandomKey(String s) {
-        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
-    }
-    private static Long assignRandomKey(Tuple2<String,Long> s){
-        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
 
 
