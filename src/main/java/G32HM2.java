@@ -50,7 +50,6 @@ public class G32HM2 {
 
         //RDD contains 10122 docs composed by a single line of numerous strings
         JavaRDD<String> collection = sc.textFile(args[0]).cache();
-        //System.out.println("Test count: " + collection.count());
 
         //number of partitions K, received as an input in the command line
         k = Integer.parseInt(args[1]);
@@ -78,17 +77,7 @@ public class G32HM2 {
         speedTest.add(end-start);
 
         /*---------Word Count 2.1-------*/
-        collection = sc.textFile(args[0]).cache();
-        collection.count();
-
         start = System.currentTimeMillis();
-
-        /*
-        JavaPairRDD<String, Long> dWordCount2Pairs = collectionRepartitioned
-                .groupBy(G32HM2::assignRandomKey)
-                .flatMapToPair(G32HM2::wordCountInPartition1)
-                .reduceByKey(Long::sum);
-         */
 
         JavaPairRDD<String, Long> dWordCount2Pairs =collectionRepartitioned
                 .flatMapToPair(G32HM2::countSingleWordsFromString)
@@ -103,9 +92,6 @@ public class G32HM2 {
         speedTest.add(end-start);
 
         /*---------Word Count 2.2-------*/
-        collection = sc.textFile(args[0]).cache();
-        collection.count();
-
         start = System.currentTimeMillis();
 
         JavaPairRDD<String, Long> dWordCount2Pairs2 =  collectionRepartitioned
@@ -128,12 +114,12 @@ public class G32HM2 {
         */
 
         /* Prints the average length of the distinct words appearing in the documents */
-        long numberOfWoccurrences = dWordCount2Pairs.count();
+        long numberOfWoccurrences = dWordCount2Pairs2.count();
         long entireWordLength = dWordCount2Pairs2.map((x) -> Long.valueOf(x._1().length())).reduce(Long::sum);
         float averageLenghtOfDistW = (float) entireWordLength / numberOfWoccurrences;
         System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
 
-        /* Print the time speed aggregateWCperKeySubset */
+        /* Print the time speed test */
         System.out.println("" +
                 "\n------ Algorithm time measurement ------\n" +
                 "Improved count 1: "+speedTest.get(0)+" ms\n" +
@@ -142,6 +128,12 @@ public class G32HM2 {
                 "----------------------------------------");
     }
 
+    /**
+     * This function receives a subset and and count the words in that subset.
+     *
+     * @param subsetbykey a subset of keys
+     * @return word count in the subset
+     */
     private static Iterator<Tuple2<String,Long>> aggregateWCperKeySubset(Tuple2<Long, Iterable<Tuple2<String, Long>>> subsetbykey) {
         Iterable<Tuple2<String, Long>> tuple2s = subsetbykey._2();
         HashMap<String,Long> count = new HashMap<>();
