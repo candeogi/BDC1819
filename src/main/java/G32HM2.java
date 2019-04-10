@@ -193,7 +193,6 @@ public class G32HM2 {
 
         //for each document of the partition i count the word occurrences and update the total word count
         while(documentsPartitioned.hasNext()){
-            //HashMap<String,Long> wordCountInDocument = new HashMap<>();
             String[] tokens = documentsPartitioned.next().split(" ");
             //count word occurrences in document
             for(String token : tokens){
