@@ -113,10 +113,13 @@ public class G32HM2 {
         printWordCount(dWordCount2Pairs2,"wc2_2output.txt");
         */
 
-        /* Prints the average length of the distinct words appearing in the documents */
+        /* Compute the average length of the distinct words appearing in the documents */
         long numberOfWoccurrences = dWordCount2Pairs2.count();
         long entireWordLength = dWordCount2Pairs2.map((x) -> (long) x._1().length()).reduce(Long::sum);
         float averageLenghtOfDistW = (float) entireWordLength / numberOfWoccurrences;
+
+        /* Print the results */
+        System.out.println("Document: "+args[0]+"\nPartitions: "+k);
         System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
 
         /* Print the time speed test */
@@ -188,17 +191,13 @@ public class G32HM2 {
         //i need this to return a correct iterator
         ArrayList<Tuple2<String,Long>> wordCountIterator = new ArrayList<>();
 
-        //per ogni documento della partizione conto le occorrenze di parole e aggiorno a fine ciclo il conteggio principale
+        //for each document of the partition i count the word occurrences and update the total word count
         while(documentsPartitioned.hasNext()){
-            HashMap<String,Long> wordCountInDocument = new HashMap<>();
+            //HashMap<String,Long> wordCountInDocument = new HashMap<>();
             String[] tokens = documentsPartitioned.next().split(" ");
             //count word occurrences in document
             for(String token : tokens){
-                wordCountInDocument.merge(token,1L,Long::sum);
-            }
-            //document has been wordcounted, time to update the main value
-            for (Map.Entry<String, Long> e : wordCountInDocument.entrySet()) {
-                wordCountInPartition.merge(e.getKey(),e.getValue(),Long::sum);
+                wordCountInPartition.merge(token,1L,Long::sum);
             }
         }
         for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {

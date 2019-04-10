@@ -1,59 +1,45 @@
----------------
-Partitions 4
-
-WordCount1:
-5284
-5885
-
-WordCount2_1:
-8164
-9653
-
-WordCount2_1_part:
-4622
-5272
-5152
-
-WordCount2_2:
-5730
-6135
-5221
-
---------------
-Partitions 16
-
-WordCount1:
-6952
-7051
-
-WordCount2_1:
-10858
-10138
-
-WordCount2_1_part:
-5980
-7609
-6321
-
-WordCount2_2:
-7172
-7404
-6634
--------------------------------
-@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
-Improved count 1: 5719 ms
-Improved count 2.1: 2788 ms
-Improved count 2.2: 2488 ms
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
-Improved count 1: 6296 ms
-Improved count 2.1: 3414 ms
-Improved count 2.2: 2124 ms
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-@@@@ TIME @@@ SPEED @@@ TEST @@@@@@
-Improved count 1: 5924 ms
-Improved count 2.1: 3481 ms
-Improved count 2.2: 1941 ms
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+------ Algorithm time measurement ------
+Improved count 1: 3680 ms
+Improved count 2.1: 4453 ms
+Improved count 2.2: 1388 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 5024 ms
+Improved count 2.1: 4847 ms
+Improved count 2.2: 1375 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 4556 ms
+Improved count 2.1: 5261 ms
+Improved count 2.2: 1274 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 3378 ms
+Improved count 2.1: 4215 ms
+Improved count 2.2: 1474 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 4652 ms
+Improved count 2.1: 5253 ms
+Improved count 2.2: 1350 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 4420 ms
+Improved count 2.1: 5433 ms
+Improved count 2.2: 1355 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 3504 ms
+Improved count 2.1: 5262 ms
+Improved count 2.2: 1238 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 4764 ms
+Improved count 2.1: 5372 ms
+Improved count 2.2: 1222 ms
+----------------------------------------
+------ Algorithm time measurement ------
+Improved count 1: 3817 ms
+Improved count 2.1: 3505 ms
+Improved count 2.2: 1146 ms
+----------------------------------------
