@@ -4,7 +4,7 @@ Repository for Big Data Computing Course
 * [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM2.java)
 * ...
 * ...
-## Homeworks
+___
 
 ### Homework 1
 
