@@ -18,12 +18,14 @@ import static org.apache.spark.mllib.linalg.BLAS.*;
 public class HW3TEST {
     public static void main(String[] args) {
 
+        //reads input file
+        //covtype.data contains 10000 points in 55-dimensional euclidean space
         if (args.length == 0) {
             throw new IllegalArgumentException("expecting the file name");
         }
-        ArrayList<Vector> myVectors = new ArrayList<>();
+        ArrayList<Vector> P = new ArrayList<>();
         try {
-            myVectors = readVectorsSeq(args[0]);
+            P = readVectorsSeq(args[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,7 +33,16 @@ public class HW3TEST {
         int k  = Integer.parseInt(args[1]);
         int iter = Integer.parseInt(args[2]);
 
+        ArrayList<Double> myWeights = new ArrayList<>();
 
+        /* Runs kmeansPP with weights equal to 1 */
+        ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
+
+        double avgDistance = kmeansObj(P,C);
+        /* compute the avg distance between points and centers */
+        System.out.println("avg distance: "+avgDistance);
+
+        /*
         double[] array1 = {0.0,0.0};
         double[] array2 = {1.0,1.0};
 
@@ -45,7 +56,6 @@ public class HW3TEST {
         double dist = Math.sqrt(sqdist);
         System.out.println(dist);
 
-        /*
         double c = 2.0;
 
         //assigns y+c*x to y
@@ -54,9 +64,7 @@ public class HW3TEST {
         scal(c,x);
         //assigns a copy of x to y
         copy(x,y);
-        */
 
-        /*
         Be careful that given two Vector variables x and y,
         if you write y=x both variables will point to the same object,
         while if you write BLAS.copy(x,y) variable y points to a copy of x,
@@ -79,7 +87,7 @@ public class HW3TEST {
      * @param iter number of iterations of Lloyd's algorithm
      * @return
      */
-    public void kmeansPP(ArrayList<Vector> P, double[] WP, int k, int iter){
+    public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Double> WP, int k, int iter){
         int size = P.size();
         int randomPoint= (int) Math.random()*size;
         ArrayList<Vector> C = new ArrayList<>();
@@ -91,7 +99,21 @@ public class HW3TEST {
         for(int i = 2; i < k ; i++){
 
         }
+        return C;
+    }
 
+    /**
+     * Receives in input a set of points P and a set of centers C,
+     * and returns the average distance of a point of P from C
+     * @param p
+     * @param c
+     */
+    private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
+        double test = 1.0;
+        /*
+          code
+        */
+        return test;
     }
 
     public static Vector strToVector(String str) {
