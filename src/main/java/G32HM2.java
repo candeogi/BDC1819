@@ -152,7 +152,7 @@ public class G32HM2 {
 
     /**
      * Assigns a random key to the input document s
-     * @param s input word count pairs
+     * @param s input word count    pairs
      * @return random Long value that will represent a random key.
      */
     private static Long assignRandomKey(Tuple2<String,Long> s){
