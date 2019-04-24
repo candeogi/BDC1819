@@ -15,7 +15,7 @@ import static org.apache.spark.mllib.linalg.BLAS.*;
  * In Spark, they can be represented as instances of the class org.apache.spark.mllib.linalg.Vector
  * and can be manipulated through static methods offered by the class org.apache.spark.mllib.linalg.Vectors.
  */
-public class HW3TEST {
+public class G32HM3 {
     public static void main(String[] args) {
 
         //reads input file
