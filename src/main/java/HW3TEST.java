@@ -1,5 +1,8 @@
+import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+
+import static org.apache.spark.mllib.linalg.BLAS.*;
 
 /**
  * We will work with points in Euclidean space represented by vectors of reals.
@@ -20,14 +23,20 @@ public class HW3TEST {
         //where "d(.,.)" is the standard Euclidean L2-distance.
         Vectors.sqdist(x,y);
 
+        double c = 2.0;
+
+        //assigns y+c*x to y
+        axpy(c,x,y);
+        //assigns c*x to x
+        scal(c,x);
+        //assigns a copy of x to y
+        copy(x,y);
 
         /*
-        Let x and y be two instances of the class Vector and let c be a scalar. The class BLAS from package
-        org.apache.spark.mllib.linalg.BLAS provides the following useful methods: axpy(c,x,y) assigns y+c*x to y;
-        scal(c,x) assigns c*x to x; and copy(x,y) assigns a copy of x to y.
-
-        Be careful that given two Vector variables x and y, if you write y=x both variables will point to the same object,
-        while if you write BLAS.copy(x,y) variable y points to a copy of x, hence x and y point to distinct objects.
+        Be careful that given two Vector variables x and y,
+        if you write y=x both variables will point to the same object,
+        while if you write BLAS.copy(x,y) variable y points to a copy of x,
+        hence x and y point to distinct objects.
          */
     }
 }
