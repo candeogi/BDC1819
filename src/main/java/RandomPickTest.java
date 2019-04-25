@@ -8,6 +8,7 @@ public class RandomPickTest {
     public static void main(String[] args) {
         // P set of points
         ArrayList<String> P = new ArrayList<>();
+        P.add("zero");
         P.add("uno");
         P.add("due");
         P.add("tre");
@@ -17,20 +18,19 @@ public class RandomPickTest {
         P.add("sette");
         P.add("otto");
         P.add("nove");
-        P.add("dieci");
 
         //weights of P
         ArrayList<Integer> WP = new ArrayList<>();
-        WP.add(1);
         WP.add(2);
-        WP.add(3);
-        WP.add(4);
-        WP.add(5);
-        WP.add(6);
-        WP.add(7);
-        WP.add(8);
-        WP.add(9);
+        WP.add(1);
+        WP.add(1);
+        WP.add(1);
+        WP.add(1);
+        WP.add(1);
         WP.add(10);
+        WP.add(1);
+        WP.add(1);
+        WP.add(1);
 
         int k = 3;
         int myWeight;
@@ -47,6 +47,8 @@ public class RandomPickTest {
         myPoint = P.get(randomNum);
         myWeight =  WP.get(randomNum);
 
+        System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
+
         S.add(myPoint);
         WS.add(myWeight);
 
@@ -54,30 +56,43 @@ public class RandomPickTest {
         P.remove(randomNum);
         WP.remove(randomNum);
 
-        double randomPivot = 0;
-        double distance = 1;
-        double sum = 0;
-        int w_p = 1;
-        double currentRange = 0;
-        int chosenIndex = 0;
 
         //choose k-1 remaining centers with probability based on weight (and distance)
         for(int i = 2; i <=k; i++){
+            System.out.println("-------start cycle ----------");
+
+
+            double sum=0;
             //random number between 0 and 1
-            randomPivot = ThreadLocalRandom.current().nextDouble(0, P.size());
+            double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
+            System.out.println("randomPivot: "+randomPivot );
             //for each point in "P-S" lets compute the range that will choose him over another
             for(int j = 0; j < P.size(); j++){
                 sum =  sum + distance(P.get(j),S)*WP.get(j);
             }
+
+
+            double currentRange = 0;
+            int chosenIndex = 0;
+            boolean indexIsChosen = false;
+
             //choose the random point
             for(int j = 0; j < P.size(); j++){
-                currentRange = currentRange + (distance(P.get(j),S)*WP.get(j) / sum);
-                if(currentRange >= randomPivot){
+                double probOfChoosingJ = (distance(P.get(j),S)*WP.get(j) / sum);
+                System.out.println("probOfChoosing "+P.get(j)+" is "+probOfChoosingJ);
+                System.out.print("currentRange :"+currentRange);
+                currentRange = currentRange + probOfChoosingJ;
+                System.out.println(" - "+currentRange+" ");
+                if((currentRange >= randomPivot)&&(!indexIsChosen)){
+                    System.out.println("currentRange >= randomPivot");
                     chosenIndex = j;
-                    break;
+                    indexIsChosen = true;
                 }
             }
+            System.out.println("currentrange should be 1 " +currentRange);
+
             myPoint = P.get(chosenIndex);
+            System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+chosenIndex+")");
             myWeight  = WP.get(chosenIndex);
 
             S.add(myPoint);
@@ -86,6 +101,7 @@ public class RandomPickTest {
             WP.remove(chosenIndex);
 
             chosenIndex = 0;
+            System.out.println("-------end cycle ----------");
         }
 
         //print S
