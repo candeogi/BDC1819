@@ -1,9 +1,9 @@
-import javafx.util.Pair;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * This is a class to test an algorithm used to pick random elements from an ArrayList with weighted probabilities
+ */
 public class RandomPickTest {
     public static void main(String[] args) {
         // P set of points
