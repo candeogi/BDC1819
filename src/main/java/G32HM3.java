@@ -85,21 +85,21 @@ public class G32HM3 {
      * @param WP weights WP of P
      * @param k number of centers
      * @param iter number of iterations of Lloyd's algorithm
-     * @return
+     * @return S a set of centers
      */
     public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Double> WP, int k, int iter){
         int size = P.size();
         int randomPoint= (int) Math.random()*size;
-        ArrayList<Vector> C = new ArrayList<>();
+        ArrayList<Vector> S = new ArrayList<>();
 
         //random first center
-        C.add(P.get(randomPoint));
+        S.add(P.get(randomPoint));
         P.remove(randomPoint);
 
         for(int i = 2; i < k ; i++){
 
         }
-        return C;
+        return S;
     }
 
     /**
