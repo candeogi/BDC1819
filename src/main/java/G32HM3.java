@@ -7,6 +7,7 @@ import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.spark.mllib.linalg.BLAS.*;
 
@@ -88,18 +89,84 @@ public class G32HM3 {
      * @return S a set of centers
      */
     public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Double> WP, int k, int iter){
-        int size = P.size();
-        int randomPoint= (int) Math.random()*size;
+        //set of centers
         ArrayList<Vector> S = new ArrayList<>();
 
-        //random first center
-        S.add(P.get(randomPoint));
-        P.remove(randomPoint);
+        for(int i=0; i<P.size();i++){
+            WP.add(1.0);
+        }
 
-        for(int i = 2; i < k ; i++){
+        //pick first center
+        int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
+        Vector myPoint = P.get(randomNum);
 
+        //System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
+        S.add(myPoint);
+
+        //remove the center from P list
+        P.remove(randomNum);
+        WP.remove(randomNum);
+
+
+        //choose k-1 remaining centers with probability based on weight (and distance)
+        for(int i = 2; i <=k; i++){
+            System.out.println("-------start cycle ----------");
+
+            double sum=0;
+            //random number between 0 and 1
+            double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
+            System.out.println("randomPivot: "+randomPivot );
+            //for each point in "P-S" lets compute the range that will choose him over another
+            for(int j = 0; j < P.size(); j++){
+                sum =  sum + distance(P.get(j),S)*WP.get(j);
+            }
+
+            double currentRange = 0;
+            int chosenIndex = 0;
+            boolean indexIsChosen = false;
+
+            //choose the random point
+            for(int j = 0; j < P.size(); j++){
+                double probOfChoosingJ = (distance(P.get(j),S)*WP.get(j) / sum);
+                System.out.println("probOfChoosing "+P.get(j)+" is "+probOfChoosingJ);
+                System.out.print("currentRange :"+currentRange);
+                currentRange = currentRange + probOfChoosingJ;
+                System.out.println(" - "+currentRange+" ");
+                if((currentRange >= randomPivot)&&(!indexIsChosen)){
+                    System.out.println("currentRange >= randomPivot");
+                    chosenIndex = j;
+                    indexIsChosen = true;
+                }
+            }
+            System.out.println("currentrange should be 1 " +currentRange);
+
+            myPoint = P.get(chosenIndex);
+            System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+chosenIndex+")");
+
+            S.add(myPoint);
+
+            P.remove(chosenIndex);
+            WP.remove(chosenIndex);
+
+            System.out.println("-------end cycle ----------");
         }
         return S;
+    }
+
+    /**
+     * Compute the distance between a point and a set of points.
+     * @param vector point for which we want to calculate the distance from the set of centers
+     * @param S set of centers
+     * @return
+     */
+    private static double distance(Vector vector, ArrayList<Vector> S) {
+        int counter = 0;
+        double sumDistance = 0;
+        for(Vector center: S){
+            sumDistance = sumDistance + Math.sqrt(Vectors.sqdist(vector,center));
+            counter ++;
+        }
+        return sumDistance/counter;
     }
 
     /**

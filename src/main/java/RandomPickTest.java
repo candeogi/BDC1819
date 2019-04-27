@@ -33,24 +33,19 @@ public class RandomPickTest {
         WP.add(1);
 
         int k = 3;
-        int myWeight;
-        String myPoint;
 
         //ArrayList<String> copyOfP = new ArrayList<>(P);
         //ArrayList<Integer> copyOfWP = new ArrayList<>(WP);
         ArrayList<String> S = new ArrayList<>();
-        ArrayList<Integer> WS = new ArrayList<>();
-
 
         //pick first center
         int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
-        myPoint = P.get(randomNum);
-        myWeight =  WP.get(randomNum);
+        String myPoint = P.get(randomNum);
+        int myWeight =  WP.get(randomNum);
 
         System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
 
         S.add(myPoint);
-        WS.add(myWeight);
 
         //remove the center from P list
         P.remove(randomNum);
