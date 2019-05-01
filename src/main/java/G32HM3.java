@@ -1,16 +1,17 @@
 import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.sql.execution.columnar.ARRAY;
+
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.apache.spark.mllib.linalg.BLAS.*;
+import static org.apache.spark.mllib.linalg.BLAS.axpy;
+import static org.apache.spark.mllib.linalg.BLAS.scal;
+
 
 /**
  * We will work with points in Euclidean space represented by vectors of reals.
@@ -153,12 +154,36 @@ public class G32HM3 {
         }
         System.out.println("Set of centers:" +C1);
         //C1 now contains the centers
+
         //we want to apply iter iterations of Lloyds algorithm to get better centers
         System.out.println("-------Lloyds------");
-
         //We need to extract the clusters from the
         //The centroid of a cluster C is
         //(1/sum_{p in C} w(p)) * sum_{p in C} p*w(p)
+        ArrayList<Vector> C = new ArrayList<>();
+        for(Vector center : C1){
+            C.add(center);
+        }
+
+        //only a number of iteration equal to "iter" parameter
+        for(int j = 0; j < iter; j++){
+            System.out.println("----LLOYDS ITERATION N."+j+" ------");
+            ArrayList<ArrayList<Vector>> partition = Partition(P, C);
+            //compute the centroid for each partition
+            for(int i = 0; i < partition.size(); i++){
+                ArrayList<Vector> cluster = partition.get(i);
+                Vector centroid = cluster.get(0);
+                for(k=1; k<cluster.size();k++){
+                    Vector point = cluster.get(k);
+                    axpy(1.0,point,centroid);
+                }
+                //assigns 1/sum_{p in C} * centroid to centroid
+                scal(1/cluster.size(),centroid);
+                System.out.println("centroid of the "+i+" cluster is: "+centroid);
+                C.set(i,centroid.copy());
+            }
+        }
+        Partition(P,C);
 
         System.out.println("---END lloyds -----");
         return C1;
@@ -191,7 +216,7 @@ public class G32HM3 {
             }
             clusters.get(l).add(p);
         }
-        System.out.println("CLUSTERS PRINT TEST");
+        System.out.println("PARTITION: -- CLUSTERS PRINT TEST");
         for(ArrayList<Vector> cluster: clusters){
             System.out.println("cluster: "+cluster);
         }
