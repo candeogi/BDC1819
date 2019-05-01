@@ -1,6 +1,7 @@
 import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.sql.execution.columnar.ARRAY;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -19,7 +20,7 @@ import static org.apache.spark.mllib.linalg.BLAS.*;
 public class G32HM3 {
     public static void main(String[] args) {
 
-        //reads input file
+        //reads input file "covtype10K.data"
         //covtype.data contains 10000 points in 55-dimensional euclidean space
         if (args.length == 0) {
             throw new IllegalArgumentException("expecting the file name");
@@ -86,11 +87,11 @@ public class G32HM3 {
      * @param WP weights WP of P
      * @param k number of centers
      * @param iter number of iterations of Lloyd's algorithm
-     * @return S a set of centers
+     * @return C a set of centers
      */
     public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Double> WP, int k, int iter){
         //set of centers
-        ArrayList<Vector> S = new ArrayList<>();
+        ArrayList<Vector> C1 = new ArrayList<>();
 
         for(int i=0; i<P.size();i++){
             WP.add(1.0);
@@ -100,8 +101,8 @@ public class G32HM3 {
         int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
         Vector myPoint = P.get(randomNum);
 
-        //System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
-        S.add(myPoint);
+        System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
+        C1.add(myPoint);
 
         //remove the center from P list
         P.remove(randomNum);
@@ -118,7 +119,7 @@ public class G32HM3 {
             System.out.println("randomPivot: "+randomPivot );
             //for each point in "P-S" lets compute the range that will choose him over another
             for(int j = 0; j < P.size(); j++){
-                sum =  sum + distance(P.get(j),S)*WP.get(j);
+                sum =  sum + distance(P.get(j),C1)*WP.get(j);
             }
 
             double currentRange = 0;
@@ -127,7 +128,7 @@ public class G32HM3 {
 
             //choose the random point
             for(int j = 0; j < P.size(); j++){
-                double probOfChoosingJ = (distance(P.get(j),S)*WP.get(j) / sum);
+                double probOfChoosingJ = (distance(P.get(j),C1)*WP.get(j) / sum);
                 System.out.println("probOfChoosing "+P.get(j)+" is "+probOfChoosingJ);
                 System.out.print("currentRange :"+currentRange);
                 currentRange = currentRange + probOfChoosingJ;
@@ -143,14 +144,58 @@ public class G32HM3 {
             myPoint = P.get(chosenIndex);
             System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+chosenIndex+")");
 
-            S.add(myPoint);
+            C1.add(myPoint);
 
             P.remove(chosenIndex);
             WP.remove(chosenIndex);
 
             System.out.println("-------end cycle ----------");
         }
-        return S;
+        System.out.println("Set of centers:" +C1);
+        //C1 now contains the centers
+        //we want to apply iter iterations of Lloyds algorithm to get better centers
+        System.out.println("-------Lloyds------");
+
+        //We need to extract the clusters from the
+        //The centroid of a cluster C is
+        //(1/sum_{p in C} w(p)) * sum_{p in C} p*w(p)
+
+        System.out.println("---END lloyds -----");
+        return C1;
+    }
+
+    /**
+     * Partition primitive
+     * @param P pointset
+     * @param S set of k-selected centers
+     * @return k-clustering of P
+     */
+    private static ArrayList<ArrayList<Vector>> Partition(ArrayList<Vector> P,ArrayList<Vector> S){
+        ArrayList<ArrayList<Vector>> clusters = new ArrayList<>();
+        //k-clustering
+        int k = S.size();
+        for(int i = 0; i < k; i++){
+            clusters.add(new ArrayList<>());
+            clusters.get(i).add(S.get(i));
+        }
+        for(Vector p : P){
+            double minDistance = Double.MAX_VALUE;
+            int l =0;
+            //lets find at which centers p belongs
+            for(int i = 0; i < k; i++){
+                double distance = Math.sqrt(Vectors.sqdist(p, S.get(i)));
+                if(distance < minDistance){
+                    minDistance = distance;
+                    l = i;
+                }
+            }
+            clusters.get(l).add(p);
+        }
+        System.out.println("CLUSTERS PRINT TEST");
+        for(ArrayList<Vector> cluster: clusters){
+            System.out.println("cluster: "+cluster);
+        }
+        return clusters;
     }
 
     /**
