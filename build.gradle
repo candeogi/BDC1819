@@ -16,7 +16,8 @@ apply plugin: 'java'
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
-  jcenter()
+    jcenter()
+    mavenCentral()
 }
 
 configurations {
@@ -26,7 +27,9 @@ configurations {
     shadowCompile // Configuration for things that should be included in the shadow jar.
 }
 
+
 dependencies {
+    implementation 'com.github.fommil.netlib:all:1.1.2'
     sparkCompile 'org.apache.spark:spark-core_2.11:2.2.0'
     sparkCompile 'org.apache.spark:spark-mllib_2.11:2.2.0'
     sparkCompile 'org.apache.hadoop:hadoop-client:2.7.2'
