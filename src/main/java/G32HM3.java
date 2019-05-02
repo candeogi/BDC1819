@@ -1,6 +1,7 @@
 import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.json4s.DefaultWriters;
 
 
 import java.io.IOException;
@@ -9,8 +10,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.apache.spark.mllib.linalg.BLAS.axpy;
-import static org.apache.spark.mllib.linalg.BLAS.scal;
+import static org.apache.spark.mllib.linalg.BLAS.*;
+import static org.apache.spark.mllib.linalg.Vectors.zeros;
 
 
 /**
@@ -76,6 +77,8 @@ public class G32HM3 {
 
     }
 
+
+
     /**
      * This method computes a set C of k centers computed as follows:
      * compute a first set C' of centers using the weighted variant of the kmeans++
@@ -95,7 +98,20 @@ public class G32HM3 {
         ArrayList<Vector> C1 = new ArrayList<>();
 
         for(int i=0; i<P.size();i++){
-            WP.add(1.0);
+            if(i == 2 ){
+                WP.add(6.0);
+            }else {
+                WP.add(1.0);
+            }
+        }
+
+        for(int i=0; i< WP.size() ;i++){
+            for(int j=0; j<WP.get(i)-1;j++){
+                Vector vector = zeros(P.get(i).size());
+                copy(P.get(i),vector);
+                System.out.println(vector);
+                P.add(vector);
+            }
         }
 
         //pick first center
@@ -105,10 +121,7 @@ public class G32HM3 {
         System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
         C1.add(myPoint);
 
-        //remove the center from P list
         P.remove(randomNum);
-        WP.remove(randomNum);
-
 
         //choose k-1 remaining centers with probability based on weight (and distance)
         for(int i = 2; i <=k; i++){
@@ -120,7 +133,7 @@ public class G32HM3 {
             System.out.println("randomPivot: "+randomPivot );
             //for each point in "P-S" lets compute the range that will choose him over another
             for(int j = 0; j < P.size(); j++){
-                sum =  sum + distance(P.get(j),C1)*WP.get(j);
+                sum =  sum + distance(P.get(j),C1);
             }
 
             double currentRange = 0;
@@ -129,7 +142,7 @@ public class G32HM3 {
 
             //choose the random point
             for(int j = 0; j < P.size(); j++){
-                double probOfChoosingJ = (distance(P.get(j),C1)*WP.get(j) / sum);
+                double probOfChoosingJ = (distance(P.get(j),C1) / sum);
                 System.out.println("probOfChoosing "+P.get(j)+" is "+probOfChoosingJ);
                 System.out.print("currentRange :"+currentRange);
                 currentRange = currentRange + probOfChoosingJ;
@@ -146,15 +159,17 @@ public class G32HM3 {
             System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+chosenIndex+")");
 
             C1.add(myPoint);
-
             P.remove(chosenIndex);
-            WP.remove(chosenIndex);
 
             System.out.println("-------end cycle ----------");
         }
         System.out.println("Set of centers:" +C1);
         //C1 now contains the centers
 
+        Partition(P,C1);
+
+
+        /*
         //we want to apply iter iterations of Lloyds algorithm to get better centers
         System.out.println("-------Lloyds------");
         //We need to extract the clusters from the
@@ -186,6 +201,8 @@ public class G32HM3 {
         Partition(P,C);
 
         System.out.println("---END lloyds -----");
+
+         */
         return C1;
     }
 
@@ -229,7 +246,7 @@ public class G32HM3 {
      * @param S set of centers
      * @return
      */
-    private static double distance(Vector vector, ArrayList<Vector> S) {
+    private static double distance2(Vector vector, ArrayList<Vector> S) {
         int counter = 0;
         double sumDistance = 0;
         for(Vector center: S){
@@ -238,6 +255,19 @@ public class G32HM3 {
         }
         return sumDistance/counter;
     }
+
+    private static double distance(Vector vector, ArrayList<Vector> S) {
+        double minDistance = Double.MAX_VALUE;
+        for(Vector center: S){
+            double distance = Math.sqrt(Vectors.sqdist(vector,center));
+            if(distance < minDistance){
+                minDistance = distance;
+            }
+        }
+        return minDistance;
+    }
+
+
 
     /**
      * Receives in input a set of points P and a set of centers C,
