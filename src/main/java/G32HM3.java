@@ -36,6 +36,9 @@ public class G32HM3 {
         int iter = Integer.parseInt(args[2]);
 
         ArrayList<Long> myWeights = new ArrayList<>();
+        for(int i=0; i<P.size();i++){
+            myWeights.add(1L);
+        }
 
         /* Runs kmeansPP with weights equal to 1 */
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
@@ -74,14 +77,6 @@ public class G32HM3 {
     public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Long> WP, int k, int iter){
         //set of centers
         ArrayList<Vector> C1 = new ArrayList<>();
-
-        for(int i=0; i<P.size();i++){
-            if(i == 2 ){
-                WP.add(6L);
-            }else {
-                WP.add(1L);
-            }
-        }
 
         //weights
         for(int i=0; i< WP.size() ;i++){
