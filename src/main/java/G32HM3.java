@@ -1,5 +1,4 @@
 import org.apache.spark.mllib.linalg.BLAS;
-import org.apache.spark.mllib.linalg.DenseVector;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 
@@ -36,7 +35,7 @@ public class G32HM3 {
         int k  = Integer.parseInt(args[1]);
         int iter = Integer.parseInt(args[2]);
 
-        ArrayList<Double> myWeights = new ArrayList<>();
+        ArrayList<Long> myWeights = new ArrayList<>();
 
         /* Runs kmeansPP with weights equal to 1 */
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
@@ -46,32 +45,12 @@ public class G32HM3 {
         System.out.println("avg distance: "+avgDistance);
 
         /*
-        double[] array1 = {0.0,0.0};
-        double[] array2 = {1.0,1.0};
-
-        //transforms an array x of double into an instance of class Vector
-        Vector x = Vectors.dense(array1);
-        Vector y = Vectors.dense(array2);
-
-        //computes the (d(x,y))^2 between two Vector x and y,
-        //where "d(.,.)" is the standard Euclidean L2-distance.
-        double sqdist = Vectors.sqdist(x, y);
-        double dist = Math.sqrt(sqdist);
-        System.out.println(dist);
-
-        double c = 2.0;
-
         //assigns y+c*x to y
-        axpy(c,x,y);
+        BLAS.axpy(c,x,y);
         //assigns c*x to x
-        scal(c,x);
+        BLAS.scal(c,x);
         //assigns a copy of x to y
-        copy(x,y);
-
-        Be careful that given two Vector variables x and y,
-        if you write y=x both variables will point to the same object,
-        while if you write BLAS.copy(x,y) variable y points to a copy of x,
-        hence x and y point to distinct objects.
+        BLAS.copy(x,y);
          */
 
     }
@@ -92,18 +71,19 @@ public class G32HM3 {
      * @param iter number of iterations of Lloyd's algorithm
      * @return C a set of centers
      */
-    public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Double> WP, int k, int iter){
+    public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Long> WP, int k, int iter){
         //set of centers
         ArrayList<Vector> C1 = new ArrayList<>();
 
         for(int i=0; i<P.size();i++){
             if(i == 2 ){
-                WP.add(6.0);
+                WP.add(6L);
             }else {
-                WP.add(1.0);
+                WP.add(1L);
             }
         }
 
+        //weights
         for(int i=0; i< WP.size() ;i++){
             for(int j=0; j<WP.get(i)-1;j++){
                 Vector vector = zeros(P.get(i).size());
@@ -114,12 +94,14 @@ public class G32HM3 {
 
         //pick first center
         int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
-        Vector myPoint = P.get(randomNum);
+        Vector randomPoint = P.get(randomNum);
+        Vector randomCenter = zeros(randomPoint.size());
+        BLAS.copy(randomPoint,randomCenter);
+        C1.add(randomCenter);
 
-        System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
-        C1.add(myPoint);
+        System.out.println("POINT "+randomPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
 
-        P.remove(randomNum);
+        //P.remove(randomNum);
 
         //choose k-1 remaining centers with probability based on weight (and distance)
         for(int i = 2; i <=k; i++){
@@ -153,15 +135,18 @@ public class G32HM3 {
             }
             System.out.println("currentrange should be 1 " +currentRange);
 
-            myPoint = P.get(chosenIndex);
-            System.out.println("POINT "+myPoint+" HAS BEEN CHOSEN (index = "+chosenIndex+")");
+            Vector probFarthestPoint = P.get(chosenIndex);
+            Vector probFarthestNewCenter = zeros(probFarthestPoint.size());
+            BLAS.copy(probFarthestPoint,probFarthestNewCenter);
+            C1.add(probFarthestNewCenter);
 
-            C1.add(myPoint);
-            P.remove(chosenIndex);
+            //P.remove(chosenIndex);
 
+            System.out.println("NEW CENTER "+probFarthestNewCenter+" HAS BEEN CHOSEN");
             System.out.println("-------end cycle ----------");
         }
         System.out.println("Set of centers:" +C1);
+        System.out.println("P is: "+P );
         //C1 now contains the centers
 
         //Partition(P,C1);
@@ -170,70 +155,50 @@ public class G32HM3 {
         //We need to extract the clusters from the
         //The centroid of a cluster C is
         //(1/sum_{p in C} w(p)) * sum_{p in C} p*w(p)
-        ArrayList<Vector> C = new ArrayList<>();
-        for(Vector center : C1){
-            C.add(center);
-        }
 
+        //ugly TODO change maybe
+        ArrayList<ArrayList<Vector>> Centers = new ArrayList<>();
+        Centers.add(C1);
 
         //only a number of iteration equal to "iter" parameter
         for(int j = 0; j < iter; j++){
             System.out.println("---- LLOYDS ITERATION N."+j+" ------");
-            ArrayList<ArrayList<Vector>> partition = Partition(P, C);
-            //compute the centroid for each partition
-            for(int i = 0; i < partition.size(); i++){
-                ArrayList<Vector> cluster = partition.get(i);
-                Vector centroid = cluster.get(0);
-                double[] centroidArray = centroid.toArray();
-                //System.out.println("initial centroid value: "+centroid);
-                for(k=1; k<cluster.size();k++){
-                    Vector point = cluster.get(k);
-                    double[] pointarray = point.toArray();
-                    //System.out.println("point: "+point);
-                    for(int o = 0; o < centroidArray.length; o++ ){
-                        centroidArray[o] = centroidArray[o] + pointarray[o];
-                    }
-                    //System.out.println("centroid after axpy: "+centroid);
+            System.out.println("LLOYDS working on P composed by \n"+P);
+            //add the centers to the dataset P so i can compute the new centroids
+            if(j!=0) {
+                for (Vector center : Centers.get(j)) {
+                    P.add(center);
                 }
-                //assigns 1/sum_{p in C} * centroid to centroid
-                //System.out.println("cluster size: "+cluster.size());
-                for(int o = 0; o < centroidArray.length; o++ ){
-                    centroidArray[o] = centroidArray[o]/cluster.size();
-                }
-                System.out.println("centroid of the "+i+" cluster is: "+centroid);
-                Vector center = C.get(i);
-                C.remove(0);
-                P.add(center);
-                C.add(centroid.copy());
             }
-            System.out.println("C set of centers is: "+C);
-        }
-
-        /*
-        //only a number of iteration equal to "iter" parameter
-        for(int j = 0; j < iter; j++){
-            System.out.println("---- LLOYDS ITERATION N."+j+" ------");
-            ArrayList<ArrayList<Vector>> partition = Partition(P, C);
+            ArrayList<ArrayList<Vector>> partition = Partition(P, Centers.get(j));
+            ArrayList<Vector> newCenters = new ArrayList<>();
             //compute the centroid for each partition
             for(int i = 0; i < partition.size(); i++){
                 ArrayList<Vector> cluster = partition.get(i);
-                Vector centroid = cluster.get(0);
-                System.out.println("initial centroid value: "+centroid);
+                Vector initPoint = cluster.get(0);
+                Vector centroid = zeros(initPoint.size());
+                BLAS.copy(initPoint,centroid);
+
                 for(k=1; k<cluster.size();k++){
                     Vector point = cluster.get(k);
-                    System.out.println("point: "+point);
                     BLAS.axpy(1.0,point,centroid);
-                    System.out.println("centroid after axpy: "+centroid);
                 }
                 //assigns 1/sum_{p in C} * centroid to centroid
-                System.out.println("cluster size: "+cluster.size());
-                BLAS.scal(1/cluster.size(),centroid);
+                double c = (double) 1/cluster.size();
+                BLAS.scal(c,centroid);
                 System.out.println("centroid of the "+i+" cluster is: "+centroid);
-                C.set(i,centroid.copy());
+                Vector newCenter = zeros(centroid.size());
+                BLAS.copy(centroid,newCenter);
+                //create a new set of centers C(j) - up to C(iter)
+                newCenters.add(newCenter);
             }
+            Centers.add(newCenters);
         }
 
-         */
+        System.out.println("@@@@@@ centers computed @@@@@@@");
+        for(int i = 0; i<Centers.size();i++){
+            System.out.println("C("+i+") is: "+Centers.get(i));
+        }
         return C1;
     }
 
@@ -248,8 +213,9 @@ public class G32HM3 {
         //k-clustering
         int k = S.size();
         for(int i = 0; i < k; i++){
+            //create a cluster for each center in S
             clusters.add(new ArrayList<>());
-            clusters.get(i).add(S.get(i));
+            //clusters.get(i).add(S.get(i));
         }
         for(Vector p : P){
             double minDistance = Double.MAX_VALUE;
@@ -262,12 +228,14 @@ public class G32HM3 {
                     l = i;
                 }
             }
+            //the point P belongs to the cluster l
             clusters.get(l).add(p);
         }
-        System.out.println("PARTITION: -- CLUSTERS PRINT TEST");
+        System.out.println("-------start print PARTITION-------");
         for(ArrayList<Vector> cluster: clusters){
             System.out.println("cluster: "+cluster);
         }
+        System.out.println("----end print partition clusters---");
         return clusters;
     }
 
