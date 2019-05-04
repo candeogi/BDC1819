@@ -17,7 +17,7 @@ import static org.apache.spark.mllib.linalg.Vectors.zeros;
  * In Spark, they can be represented as instances of the class org.apache.spark.mllib.linalg.Vector
  * and can be manipulated through static methods offered by the class org.apache.spark.mllib.linalg.Vectors.
  */
-public class G32HM3 {
+public class G32HM3arrayList {
     public static void main(String[] args) {
 
         //reads input file "covtype10K.data"
