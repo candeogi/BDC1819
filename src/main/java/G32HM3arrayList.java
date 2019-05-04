@@ -158,13 +158,10 @@ public class G32HM3arrayList {
         //only a number of iteration equal to "iter" parameter
         for(int j = 0; j < iter; j++){
             System.out.println("---- LLOYDS ITERATION N."+j+" ------");
-            System.out.println("LLOYDS working on P composed by \n"+P);
-            //add the centers to the dataset P so i can compute the new centroids
-            if(j!=0) {
-                for (Vector center : Centers.get(j)) {
-                    P.add(center);
-                }
-            }
+            System.out.println("LLOYDS working on...");
+            System.out.println("P: "+P);
+            System.out.println("C("+j+") is: "+Centers.get(j));
+
             ArrayList<ArrayList<Vector>> partition = Partition(P, Centers.get(j));
             ArrayList<Vector> newCenters = new ArrayList<>();
             //compute the centroid for each partition
