@@ -45,7 +45,7 @@ public class G32HM3arrayList {
 
         double avgDistance = kmeansObj(P,C);
         /* compute the avg distance between points and centers */
-        System.out.println("avg distance: "+avgDistance);
+        //System.out.println("avg distance: "+avgDistance);
 
         /*
         //assigns y+c*x to y
@@ -191,7 +191,14 @@ public class G32HM3arrayList {
         for(int i = 0; i<Centers.size();i++){
             System.out.println("C("+i+") is: "+Centers.get(i));
         }
-        return C1;
+
+        /*Test obj function*/
+        for(ArrayList<Vector> setOfC: Centers){
+            /* compute the avg distance between points and centers */
+            System.out.println("avg distance: "+kmeansObj(P,setOfC));
+        }
+
+        return Centers.get(Centers.size()-1);
     }
 
     /**
@@ -231,22 +238,13 @@ public class G32HM3arrayList {
         return clusters;
     }
 
-    /**
-     * Compute the distance between a point and a set of points.
-     * @param vector point for which we want to calculate the distance from the set of centers
-     * @param S set of centers
-     * @return
-     */
-    private static double distance2(Vector vector, ArrayList<Vector> S) {
-        int counter = 0;
-        double sumDistance = 0;
-        for(Vector center: S){
-            sumDistance = sumDistance + Math.sqrt(Vectors.sqdist(vector,center));
-            counter ++;
-        }
-        return sumDistance/counter;
-    }
 
+    /**
+     * Compute the distance between a point and the closest center.
+     * @param vector point for which we want to calculate the distance
+     * @param S set of centers
+     * @return minDistance the distance to the cloesest center
+     */
     private static double distance(Vector vector, ArrayList<Vector> S) {
         double minDistance = Double.MAX_VALUE;
         for(Vector center: S){
@@ -267,11 +265,12 @@ public class G32HM3arrayList {
      * @param c
      */
     private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
-        double test = 1.0;
-        /*
-          code
-        */
-        return test;
+        double sumDistance = 0;
+        for(int i=0;i<p.size();i++){
+            sumDistance = sumDistance + distance(p.get(i),c);
+        }
+
+        return sumDistance/p.size();
     }
 
     public static Vector strToVector(String str) {
@@ -293,5 +292,6 @@ public class G32HM3arrayList {
                 .forEach(e -> result.add(e));
         return result;
     }
+
 
 }
