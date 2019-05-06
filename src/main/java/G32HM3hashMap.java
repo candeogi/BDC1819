@@ -90,6 +90,10 @@ public class G32HM3hashMap {
         for(int i = 0; i<P.size(); i++){
             weightsOfP.put(P.get(i),WP.get(i));
         }
+        System.out.println("<------ kmeans++ starts ------>");
+        System.out.println("Set of centers:" +C1);
+        System.out.println("P is: "+P );
+        System.out.println("hashmap: "+weightsOfP);
 
         //pick first center
         int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
@@ -98,13 +102,12 @@ public class G32HM3hashMap {
         BLAS.copy(randomPoint,randomCenter);
         C1.add(randomCenter);
 
-        System.out.println("POINT "+randomPoint+" HAS BEEN CHOSEN (index = "+randomNum+")");
-
+        System.out.println("FIRST RANDOM POINT "+randomPoint+" HAS BEEN CHOSEN AS A CENTER\n");
+        System.out.println("<----------------------------->");
         //P.remove(randomNum);
 
         //choose k-1 remaining centers with probability based on weight (and distance)
         for(int i = 2; i <=k; i++){
-            System.out.println("-------start cycle ----------");
 
             double sum=0;
             //random number between 0 and 1
@@ -118,32 +121,28 @@ public class G32HM3hashMap {
 
             double currentRange = 0;
             int chosenIndex = 0;
-            boolean indexIsChosen = false;
 
             //choose the random point
             for(int j = 0; j < P.size(); j++){
                 Vector currentVector = P.get(j);
                 double probOfChoosingJ = (distance(currentVector,C1)*weightsOfP.get(currentVector) / sum);
-                System.out.println("probOfChoosing "+currentVector+" is "+probOfChoosingJ);
-                System.out.print("currentRange :"+currentRange);
+                System.out.print("Prob of choosing "+currentVector+" is "+probOfChoosingJ+" | ");
+                System.out.print("range : ["+currentRange);
                 currentRange = currentRange + probOfChoosingJ;
-                System.out.println(" - "+currentRange+" ");
-                if((currentRange >= randomPivot)&&(!indexIsChosen)){
-                    System.out.println("currentRange >= randomPivot");
+                System.out.println(" - "+currentRange+"]");
+                if(currentRange >= randomPivot){
+                    System.out.println("<!> currentRange >= randomPivot");
                     chosenIndex = j;
-                    indexIsChosen = true;
+                    break;
                 }
             }
-            System.out.println("currentrange should be 1 " +currentRange);
 
+            //add the point to the centers
             Vector probFarthestPoint = P.get(chosenIndex);
-
             C1.add(probFarthestPoint);
 
-            //P.remove(chosenIndex);
-
             System.out.println("NEW CENTER "+probFarthestPoint+" HAS BEEN CHOSEN");
-            System.out.println("-------end cycle ----------");
+            System.out.println("<----------------------------->");
         }
         System.out.println("Set of centers:" +C1);
         System.out.println("P is: "+P );
@@ -152,19 +151,18 @@ public class G32HM3hashMap {
 
         //Partition(P,C1);
         //we want to apply iter iterations of Lloyds algorithm to get better centers
-        System.out.println("-------Lloyds------");
+        System.out.println("<---------- LLOYDS' ALGORITHM ---------->");
         //We need to extract the clusters from the
         //The centroid of a cluster C is
         //(1/sum_{p in C} w(p)) * sum_{p in C} p*w(p)
 
-        //ugly TODO change maybe
         ArrayList<ArrayList<Vector>> Centers = new ArrayList<>();
         Centers.add(C1);
 
+        double minObjFuncValue = Double.MAX_VALUE;
         //only a number of iteration equal to "iter" parameter
         for(int j = 0; j < iter; j++){
-            System.out.println("---- LLOYDS ITERATION N."+j+" ------");
-            System.out.println("LLOYDS working on...");
+            System.out.println("\n LLOYDS ITERATION N."+j+" working on...");
             System.out.println("P: "+P);
             System.out.println("C("+j+") is: "+Centers.get(j));
 
@@ -177,48 +175,47 @@ public class G32HM3hashMap {
                 Vector centroid = zeros(initPoint.size());
                 BLAS.copy(initPoint,centroid);
                 Long sumOfWeights = weightsOfP.get(initPoint);
-                System.out.println("initialized centroid = "+centroid);
-                System.out.println("initial weight = "+sumOfWeights);
 
-                System.out.println("<---cluster n."+i+" --->");
                 //per ogni punto del cluster
                 for(k=1; k<cluster.size();k++){
                     Vector currentVector = cluster.get(k);
                     Long currentWeight = weightsOfP.get(currentVector);
 
-                    System.out.println("currentVector = "+currentVector);
-                    System.out.println("currentWeight = "+currentWeight);
-
                     //somma dei punti pesati
                     BLAS.axpy(currentWeight,currentVector,centroid);
                     sumOfWeights = sumOfWeights + currentWeight;
-                    System.out.println("updated centroid = "+centroid);
                 }
-                System.out.println("sumofweights = "+sumOfWeights);
                 //assigns 1/sum_{p in C} * centroid to centroid
                 double c = (double) 1/sumOfWeights;
                 BLAS.scal(c,centroid);
-                System.out.println("centroid of the "+i+" cluster is: "+centroid);
                 Vector newCenter = zeros(centroid.size());
                 BLAS.copy(centroid,newCenter);
                 //create a new set of centers C(j) - up to C(iter)
                 newCenters.add(newCenter);
-                System.out.println("<--- --- --->");
             }
-            Centers.add(newCenters);
+            System.out.println("\nCentroid = "+newCenters);
+            System.out.print("Is the new clustering better? ");
+            double newObjFuncValue = kmeansObj(P, newCenters);
+            if(newObjFuncValue<minObjFuncValue){
+                System.out.println("YES");
+                minObjFuncValue = newObjFuncValue;
+                Centers.add(newCenters);
+            }
+            else{
+                System.out.println("NO");
+                System.out.println("\nLloyd's ended early ---> Optimal obj function found in iteration n."+ j);
+                break;
+            }
         }
+        System.out.println("<------------------------------------>");
 
-        System.out.println("@@@@@@ centers computed @@@@@@@");
+        System.out.println("\n<--- Set of centers computed --->");
         for(int i = 0; i<Centers.size();i++){
             System.out.println("C("+i+") is: "+Centers.get(i));
+            System.out.println("avg distance: "+kmeansObj(P,Centers.get(i)));
         }
 
-        /*Test obj function*/
-        for(ArrayList<Vector> setOfC: Centers){
-            /* compute the avg distance between points and centers */
-            System.out.println("avg distance: "+kmeansObj(P,setOfC));
-        }
-
+        //return the last optimal centers
         return Centers.get(Centers.size()-1);
     }
 
@@ -250,11 +247,10 @@ public class G32HM3hashMap {
             //the point P belongs to the cluster l
             clusters.get(l).add(p);
         }
-        System.out.println("-------start print PARTITION-------");
+        System.out.println("\nPartition");
         for(ArrayList<Vector> cluster: clusters){
             System.out.println("cluster: "+cluster);
         }
-        System.out.println("----end print partition clusters---");
         return clusters;
     }
 
