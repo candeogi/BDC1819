@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.spark.mllib.linalg.Vectors.zeros;
@@ -37,7 +38,12 @@ public class G32HM3hashMap {
 
         ArrayList<Long> myWeights = new ArrayList<>();
         for(int i=0; i<P.size();i++){
-            myWeights.add(1L);
+            if(i==P.size()-1){
+                //for test purposes
+                myWeights.add(1L);
+            }else{
+                myWeights.add(1L);
+            }
         }
 
         /* Runs kmeansPP with weights equal to 1 */
@@ -78,13 +84,11 @@ public class G32HM3hashMap {
         //set of centers
         ArrayList<Vector> C1 = new ArrayList<>();
 
-        //weights
-        for(int i=0; i< WP.size() ;i++){
-            for(int j=0; j<WP.get(i)-1;j++){
-                Vector vector = zeros(P.get(i).size());
-                BLAS.copy(P.get(i),vector);
-                P.add(vector);
-            }
+        HashMap<Vector,Long> weightsOfP = new HashMap<>();
+
+        //initialize the hashmap containing P and its weights
+        for(int i = 0; i<P.size(); i++){
+            weightsOfP.put(P.get(i),WP.get(i));
         }
 
         //pick first center
@@ -108,7 +112,8 @@ public class G32HM3hashMap {
             System.out.println("randomPivot: "+randomPivot );
             //for each point in "P-S" lets compute the range that will choose him over another
             for(int j = 0; j < P.size(); j++){
-                sum =  sum + distance(P.get(j),C1);
+                Vector currentVector = P.get(j);
+                sum =  sum + distance(currentVector,C1)*weightsOfP.get(currentVector);
             }
 
             double currentRange = 0;
@@ -117,8 +122,9 @@ public class G32HM3hashMap {
 
             //choose the random point
             for(int j = 0; j < P.size(); j++){
-                double probOfChoosingJ = (distance(P.get(j),C1) / sum);
-                System.out.println("probOfChoosing "+P.get(j)+" is "+probOfChoosingJ);
+                Vector currentVector = P.get(j);
+                double probOfChoosingJ = (distance(currentVector,C1)*weightsOfP.get(currentVector) / sum);
+                System.out.println("probOfChoosing "+currentVector+" is "+probOfChoosingJ);
                 System.out.print("currentRange :"+currentRange);
                 currentRange = currentRange + probOfChoosingJ;
                 System.out.println(" - "+currentRange+" ");
@@ -131,17 +137,17 @@ public class G32HM3hashMap {
             System.out.println("currentrange should be 1 " +currentRange);
 
             Vector probFarthestPoint = P.get(chosenIndex);
-            Vector probFarthestNewCenter = zeros(probFarthestPoint.size());
-            BLAS.copy(probFarthestPoint,probFarthestNewCenter);
-            C1.add(probFarthestNewCenter);
+
+            C1.add(probFarthestPoint);
 
             //P.remove(chosenIndex);
 
-            System.out.println("NEW CENTER "+probFarthestNewCenter+" HAS BEEN CHOSEN");
+            System.out.println("NEW CENTER "+probFarthestPoint+" HAS BEEN CHOSEN");
             System.out.println("-------end cycle ----------");
         }
         System.out.println("Set of centers:" +C1);
         System.out.println("P is: "+P );
+        System.out.println("hashmap: "+weightsOfP);
         //C1 now contains the centers
 
         //Partition(P,C1);
@@ -170,19 +176,34 @@ public class G32HM3hashMap {
                 Vector initPoint = cluster.get(0);
                 Vector centroid = zeros(initPoint.size());
                 BLAS.copy(initPoint,centroid);
+                Long sumOfWeights = weightsOfP.get(initPoint);
+                System.out.println("initialized centroid = "+centroid);
+                System.out.println("initial weight = "+sumOfWeights);
 
+                System.out.println("<---cluster n."+i+" --->");
+                //per ogni punto del cluster
                 for(k=1; k<cluster.size();k++){
-                    Vector point = cluster.get(k);
-                    BLAS.axpy(1.0,point,centroid);
+                    Vector currentVector = cluster.get(k);
+                    Long currentWeight = weightsOfP.get(currentVector);
+
+                    System.out.println("currentVector = "+currentVector);
+                    System.out.println("currentWeight = "+currentWeight);
+
+                    //somma dei punti pesati
+                    BLAS.axpy(currentWeight,currentVector,centroid);
+                    sumOfWeights = sumOfWeights + currentWeight;
+                    System.out.println("updated centroid = "+centroid);
                 }
+                System.out.println("sumofweights = "+sumOfWeights);
                 //assigns 1/sum_{p in C} * centroid to centroid
-                double c = (double) 1/cluster.size();
+                double c = (double) 1/sumOfWeights;
                 BLAS.scal(c,centroid);
                 System.out.println("centroid of the "+i+" cluster is: "+centroid);
                 Vector newCenter = zeros(centroid.size());
                 BLAS.copy(centroid,newCenter);
                 //create a new set of centers C(j) - up to C(iter)
                 newCenters.add(newCenter);
+                System.out.println("<--- --- --->");
             }
             Centers.add(newCenters);
         }
@@ -214,7 +235,6 @@ public class G32HM3hashMap {
         for(int i = 0; i < k; i++){
             //create a cluster for each center in S
             clusters.add(new ArrayList<>());
-            //clusters.get(i).add(S.get(i));
         }
         for(Vector p : P){
             double minDistance = Double.MAX_VALUE;

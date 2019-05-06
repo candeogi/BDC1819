@@ -37,7 +37,12 @@ public class G32HM3arrayList {
 
         ArrayList<Long> myWeights = new ArrayList<>();
         for(int i=0; i<P.size();i++){
-            myWeights.add(1L);
+            if(i==P.size()-1){
+                //for test purposes
+                myWeights.add(1L);
+            }else{
+                myWeights.add(1L);
+            }
         }
 
         /* Runs kmeansPP with weights equal to 1 */
