@@ -80,11 +80,13 @@ public class G32HM3hashMap {
      * @param iter number of iterations of Lloyd's algorithm
      * @return C a set of centers
      */
-    public static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Long> WP, int k, int iter){
+    private static ArrayList<Vector> kmeansPP(ArrayList<Vector> P, ArrayList<Long> WP, int k, int iter){
         //set of centers
         ArrayList<Vector> C1 = new ArrayList<>();
 
         HashMap<Vector,Long> weightsOfP = new HashMap<>();
+        HashMap<Vector,Double> distancesOfP = new HashMap<>();
+
 
         //initialize the hashmap containing P and its weights
         for(int i = 0; i<P.size(); i++){
@@ -109,36 +111,34 @@ public class G32HM3hashMap {
         //choose k-1 remaining centers with probability based on weight (and distance)
         for(int i = 2; i <=k; i++){
 
-            double sum=0;
             //random number between 0 and 1
             double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
             System.out.println("randomPivot: "+randomPivot );
-            //for each point in "P-S" lets compute the range that will choose him over another
-            for(int j = 0; j < P.size(); j++){
-                Vector currentVector = P.get(j);
-                sum =  sum + distance(currentVector,C1)*weightsOfP.get(currentVector);
+
+            double sumOfDistances=0;
+            //compute the distances of the points from the centers
+            for(Vector currentVector : P){
+                distancesOfP.put(currentVector, distance(currentVector,C1));
+                sumOfDistances =  sumOfDistances + distancesOfP.get(currentVector)*weightsOfP.get(currentVector);
             }
 
-            double currentRange = 0;
-            int chosenIndex = 0;
 
-            //choose the random point
-            for(int j = 0; j < P.size(); j++){
-                Vector currentVector = P.get(j);
-                double probOfChoosingJ = (distance(currentVector,C1)*weightsOfP.get(currentVector) / sum);
-                System.out.print("Prob of choosing "+currentVector+" is "+probOfChoosingJ+" | ");
+            double currentRange = 0;
+            Vector probFarthestPoint = P.get(0);
+            for(Vector currentVector : P){
+                double probOfChoosing = (distancesOfP.get(currentVector)*weightsOfP.get(currentVector) / sumOfDistances);
+                System.out.print("Prob of choosing "+currentVector+" is "+probOfChoosing+" | ");
                 System.out.print("range : ["+currentRange);
-                currentRange = currentRange + probOfChoosingJ;
+                currentRange = currentRange + probOfChoosing;
                 System.out.println(" - "+currentRange+"]");
                 if(currentRange >= randomPivot){
                     System.out.println("<!> currentRange >= randomPivot");
-                    chosenIndex = j;
+                    probFarthestPoint = currentVector;
                     break;
                 }
             }
-
             //add the point to the centers
-            Vector probFarthestPoint = P.get(chosenIndex);
+            //Vector probFarthestPoint = P.get(chosenIndex);
             C1.add(probFarthestPoint);
 
             System.out.println("NEW CENTER "+probFarthestPoint+" HAS BEEN CHOSEN");
@@ -289,7 +289,7 @@ public class G32HM3hashMap {
         return sumDistance/p.size();
     }
 
-    public static Vector strToVector(String str) {
+    private static Vector strToVector(String str) {
         String[] tokens = str.split(" ");
         double[] data = new double[tokens.length];
         for (int i=0; i<tokens.length; i++) {
@@ -298,7 +298,7 @@ public class G32HM3hashMap {
         return Vectors.dense(data);
     }
 
-    public static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
+    private static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
         if (Files.isDirectory(Paths.get(filename))) {
             throw new IllegalArgumentException("readVectorsSeq is meant to read a single file.");
         }
