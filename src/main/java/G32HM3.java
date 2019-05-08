@@ -2,7 +2,6 @@ import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -14,11 +13,14 @@ import static org.apache.spark.mllib.linalg.Vectors.zeros;
 
 
 /**
- * We will work with points in Euclidean space represented by vectors of reals.
- * In Spark, they can be represented as instances of the class org.apache.spark.mllib.linalg.Vector
- * and can be manipulated through static methods offered by the class org.apache.spark.mllib.linalg.Vectors.
+ * Group 32
+ * File for the Homework n.3 of "Big Data Computing" Course"
+ *
+ * @author Giovanni Candeo 1206150
+ * @author Nicolo Levorato 1156744
+ *
  */
-public class G32HM3hashMap {
+public class G32HM3 {
     public static void main(String[] args) {
 
         //reads input file "covtype10K.data"
@@ -37,31 +39,17 @@ public class G32HM3hashMap {
         int iter = Integer.parseInt(args[2]);
 
         ArrayList<Long> myWeights = new ArrayList<>();
+        //for this hw, weights are set to 1
         for(int i=0; i<P.size();i++){
-            if(i==P.size()-1){
-                //for test purposes
-                myWeights.add(5L);
-            }else{
-                myWeights.add(1L);
-            }
+            myWeights.add(1L);
         }
 
         /* Runs kmeansPP with weights equal to 1 */
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
 
-        double avgDistance = kmeansObj(P,C);
         /* compute the avg distance between points and centers */
-        //System.out.println("avg distance: "+avgDistance);
-
-        /*
-        //assigns y+c*x to y
-        BLAS.axpy(c,x,y);
-        //assigns c*x to x
-        BLAS.scal(c,x);
-        //assigns a copy of x to y
-        BLAS.copy(x,y);
-         */
-
+        double avgDistance = kmeansObj(P,C);
+        System.out.println("avg distance: "+avgDistance);
     }
 
 
@@ -87,99 +75,72 @@ public class G32HM3hashMap {
         HashMap<Vector,Long> weightsOfP = new HashMap<>();
         HashMap<Vector,Double> distancesOfP = new HashMap<>();
 
-
-        //initialize the hashmap containing P and its weights
+        //initialize the hash map containing P and its weights
         for(int i = 0; i<P.size(); i++){
             weightsOfP.put(P.get(i),WP.get(i));
         }
-        System.out.println("<------ kmeans++ starts ------>");
-        System.out.println("Set of centers:" +C1);
-        System.out.println("P is: "+P );
-        System.out.println("hashmap: "+weightsOfP);
 
         //pick first center
         int randomNum = ThreadLocalRandom.current().nextInt(0, P.size());
         Vector randomPoint = P.get(randomNum);
         C1.add(randomPoint);
 
-        System.out.println("FIRST RANDOM POINT "+randomPoint+" HAS BEEN CHOSEN AS A CENTER\n");
-        System.out.println("<----------------------------->");
-        //P.remove(randomNum);
-
-        //choose k-1 remaining centers with probability based on weight (and distance)
+        //choose k-1 remaining centers with probability based on its weight and distance
         for(int i = 2; i <=k; i++){
 
             //random number between 0 and 1
             double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
-            System.out.println("randomPivot: "+randomPivot );
 
-            double sumOfDistances=0;
             //compute the distances of the points from the centers
+            double sumOfDistances=0;
             for(Vector currentVector : P){
                 distancesOfP.put(currentVector, distance(currentVector,C1));
                 sumOfDistances =  sumOfDistances + distancesOfP.get(currentVector)*weightsOfP.get(currentVector);
             }
 
-
+            //pick the new next center with probability based on its weight and distance
             double currentRange = 0;
             Vector probFarthestPoint = P.get(0);
             for(Vector currentVector : P){
                 double probOfChoosing = (distancesOfP.get(currentVector)*weightsOfP.get(currentVector) / sumOfDistances);
-                System.out.print("Prob of choosing "+currentVector+" is "+probOfChoosing+" | ");
-                System.out.print("range : ["+currentRange);
                 currentRange = currentRange + probOfChoosing;
-                System.out.println(" - "+currentRange+"]");
                 if(currentRange >= randomPivot){
-                    System.out.println("<!> currentRange >= randomPivot");
                     probFarthestPoint = currentVector;
                     break;
                 }
             }
-            //add the point to the centers
-            //Vector probFarthestPoint = P.get(chosenIndex);
             C1.add(probFarthestPoint);
-
-            System.out.println("NEW CENTER "+probFarthestPoint+" HAS BEEN CHOSEN");
-            System.out.println("<----------------------------->");
         }
-        System.out.println("Set of centers:" +C1);
-        System.out.println("P is: "+P );
-        System.out.println("hashmap: "+weightsOfP);
         //C1 now contains the centers
+        //we want to apply "iter" iterations of Lloyds' algorithm to get better centers
 
-        //Partition(P,C1);
-        //we want to apply iter iterations of Lloyds algorithm to get better centers
-        System.out.println("<---------- LLOYDS' ALGORITHM ---------->");
-        //We need to extract the clusters from the
-        //The centroid of a cluster C is
-        //(1/sum_{p in C} w(p)) * sum_{p in C} p*w(p)
+        //C is an "arraylist" that stores the list of centers computed in every iteration of Lloyds' alg.
+        //C1 = C(0) and so on ...
+        ArrayList<ArrayList<Vector>> C = new ArrayList<>();
+        C.add(C1);
 
-        ArrayList<ArrayList<Vector>> Centers = new ArrayList<>();
-        Centers.add(C1);
-
-        double minObjFuncValue = Double.MAX_VALUE;
         //only a number of iteration equal to "iter" parameter
+        double minObjFuncValue = Double.MAX_VALUE;
         for(int j = 0; j < iter; j++){
-            System.out.println("\n LLOYDS ITERATION N."+j+" working on...");
-            System.out.println("P: "+P);
-            System.out.println("C("+j+") is: "+Centers.get(j));
-
-            ArrayList<ArrayList<Vector>> partition = Partition(P, Centers.get(j));
+            ArrayList<ArrayList<Vector>> partition = Partition(P, C.get(j));
             ArrayList<Vector> newCenters = new ArrayList<>();
+
             //compute the centroid for each partition
             for(int i = 0; i < partition.size(); i++){
                 ArrayList<Vector> cluster = partition.get(i);
+
+                //initialize the centroid
                 Vector initPoint = cluster.get(0);
                 Vector centroid = zeros(initPoint.size());
                 BLAS.copy(initPoint,centroid);
                 Long sumOfWeights = weightsOfP.get(initPoint);
 
-                //per ogni punto del cluster
+                //update the centroid value for each point of the cluster
                 for(k=1; k<cluster.size();k++){
                     Vector currentVector = cluster.get(k);
                     Long currentWeight = weightsOfP.get(currentVector);
 
-                    //somma dei punti pesati
+                    //sum of weighted points
                     BLAS.axpy(currentWeight,currentVector,centroid);
                     sumOfWeights = sumOfWeights + currentWeight;
                 }
@@ -188,33 +149,33 @@ public class G32HM3hashMap {
                 BLAS.scal(c,centroid);
                 Vector newCenter = zeros(centroid.size());
                 BLAS.copy(centroid,newCenter);
-                //create a new set of centers C(j) - up to C(iter)
+
+                //update the set of centers
                 newCenters.add(newCenter);
             }
-            System.out.println("\nCentroid = "+newCenters);
-            System.out.print("Is the new clustering better? ");
+
+            //check if the objective function gets better
             double newObjFuncValue = kmeansObj(P, newCenters);
+
+            //continues the lloyds' iteration only if gets better
             if(newObjFuncValue<minObjFuncValue){
-                System.out.println("YES");
                 minObjFuncValue = newObjFuncValue;
-                Centers.add(newCenters);
+                C.add(newCenters);
             }
             else{
-                System.out.println("NO");
-                System.out.println("\nLloyd's ended early ---> Optimal obj function found in iteration n."+ j);
+                //the obj function doesnt get better, exit the lloyds iterations.
                 break;
             }
         }
-        System.out.println("<------------------------------------>");
 
-        System.out.println("\n<--- Set of centers computed --->");
-        for(int i = 0; i<Centers.size();i++){
-            System.out.println("C("+i+") is: "+Centers.get(i));
-            System.out.println("avg distance: "+kmeansObj(P,Centers.get(i)));
-        }
+        /*
+        for(int i = 0; i<C.size();i++){
+            System.out.println("C("+i+") is: "+C.get(i));
+            System.out.println("avg distance: "+kmeansObj(P,C.get(i)));
+        }*/
 
-        //return the last optimal centers
-        return Centers.get(Centers.size()-1);
+        //return the last optimal set of centers
+        return C.get(C.size()-1);
     }
 
     /**
@@ -245,10 +206,7 @@ public class G32HM3hashMap {
             //the point P belongs to the cluster l
             clusters.get(l).add(p);
         }
-        System.out.println("\nPartition");
-        for(ArrayList<Vector> cluster: clusters){
-            System.out.println("cluster: "+cluster);
-        }
+
         return clusters;
     }
 
@@ -277,16 +235,22 @@ public class G32HM3hashMap {
      * and returns the average distance of a point of P from C
      * @param p
      * @param c
+     * @return average distance
      */
     private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
         double sumDistance = 0;
         for(int i=0;i<p.size();i++){
             sumDistance = sumDistance + distance(p.get(i),c);
         }
-
         return sumDistance/p.size();
     }
 
+    /**
+     * String to Vector
+     *
+     * @param str
+     * @return Vector representing the point
+     */
     private static Vector strToVector(String str) {
         String[] tokens = str.split(" ");
         double[] data = new double[tokens.length];
@@ -296,6 +260,13 @@ public class G32HM3hashMap {
         return Vectors.dense(data);
     }
 
+    /**
+     * Converts a file representing a dataset of points into an arraylist of vectors
+     *
+     * @param filename input file
+     * @return ArrayList of vectors representing the dataset
+     * @throws IOException
+     */
     private static ArrayList<Vector> readVectorsSeq(String filename) throws IOException {
         if (Files.isDirectory(Paths.get(filename))) {
             throw new IllegalArgumentException("readVectorsSeq is meant to read a single file.");
