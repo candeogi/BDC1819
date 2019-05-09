@@ -172,6 +172,7 @@ public class G32HM3 {
             }
             else{
                 //the obj function doesnt get better, exit the lloyds iterations.
+                //if you want to remove this feature just comment the break command
                 System.out.println("Lloyd's ended earlier ---> Optimal obj function found in iteration n."+ j);
                 break;
             }
