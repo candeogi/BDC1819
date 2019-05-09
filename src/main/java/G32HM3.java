@@ -39,28 +39,36 @@ public class G32HM3 {
         int iter = Integer.parseInt(args[2]);
 
         ArrayList<Long> myWeights = new ArrayList<>();
-        //for this hw, weights are set to 1
+        //for this homework, weights are set to 1
         for(int i=0; i<P.size();i++){
             myWeights.add(1L);
         }
 
-        /* Runs kmeansPP with weights equal to 1 */
+        System.out.println("File: "+args[0]);
+        System.out.println("Centers: "+k);
+        System.out.println("Iterations: "+iter);
+
+        //runs kmeansPP with weights equal to 1
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
 
-        /* compute the avg distance between points and centers */
+        //compute the average distance between points and centers
         double avgDistance = kmeansObj(P,C);
-        System.out.println("avg distance: "+avgDistance);
+        System.out.println("average distance = "+avgDistance);
     }
 
 
 
     /**
      * This method computes a set C of k centers computed as follows:
-     * compute a first set C' of centers using the weighted variant of the kmeans++
+     *
+     * Compute a first set C' of centers using the weighted variant of the kmeans++
      * In each iteration the probability for a non-center point p of being chosen as next center is:
      * w_p*(d_p)/(sum_{q non center} w_q*(d_q))
      * where d_p is the distance of p from the closest among the already selected centers and w_p is the weight of p.
      *
+     * Then it applies the Lloyds' algorithm for up to an "iter" number of iterations or until it reaches a minimum
+     * value of the objective function
+     * The best set of centers are then returned.
      *
      * @param P set of points
      * @param WP weights WP of P
@@ -154,16 +162,17 @@ public class G32HM3 {
                 newCenters.add(newCenter);
             }
 
-            //check if the objective function gets better
+            //check if the objective function is decreasing
             double newObjFuncValue = kmeansObj(P, newCenters);
 
-            //continues the lloyds' iteration only if gets better
+            //continues the lloyds' iteration only if its decreasing
             if(newObjFuncValue<minObjFuncValue){
                 minObjFuncValue = newObjFuncValue;
                 C.add(newCenters);
             }
             else{
                 //the obj function doesnt get better, exit the lloyds iterations.
+                System.out.println("Lloyd's ended earlier ---> Optimal obj function found in iteration n."+ j);
                 break;
             }
         }
@@ -176,6 +185,21 @@ public class G32HM3 {
 
         //return the last optimal set of centers
         return C.get(C.size()-1);
+    }
+
+    /**
+     * Receives in input a set of points P and a set of centers C,
+     * and returns the average distance of a point of P from C
+     * @param p
+     * @param c
+     * @return average distance
+     */
+    private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
+        double sumDistance = 0;
+        for(int i=0;i<p.size();i++){
+            sumDistance = sumDistance + distance(p.get(i),c);
+        }
+        return sumDistance/p.size();
     }
 
     /**
@@ -206,7 +230,6 @@ public class G32HM3 {
             //the point P belongs to the cluster l
             clusters.get(l).add(p);
         }
-
         return clusters;
     }
 
@@ -229,21 +252,6 @@ public class G32HM3 {
     }
 
 
-
-    /**
-     * Receives in input a set of points P and a set of centers C,
-     * and returns the average distance of a point of P from C
-     * @param p
-     * @param c
-     * @return average distance
-     */
-    private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
-        double sumDistance = 0;
-        for(int i=0;i<p.size();i++){
-            sumDistance = sumDistance + distance(p.get(i),c);
-        }
-        return sumDistance/p.size();
-    }
 
     /**
      * String to Vector
@@ -277,6 +285,4 @@ public class G32HM3 {
                 .forEach(e -> result.add(e));
         return result;
     }
-
-
 }

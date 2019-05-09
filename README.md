@@ -37,3 +37,12 @@ Create a program GxxHM2.java (for Java users) or GxxHM2.py (for Python users), w
 Try to make each version as fast as possible. You can test you program using as input the file text-sample.txt, which contains 10122 documents from Wikipedia (one document per line) with 3503570 word occurrences overall. 
 
 **Solution:** [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM2.java)
+___
+### Homework 3
+**Assigment**  
+Create a program that reads an input dataset of points in a metric space and computes a k-clustering using the kmeans++ algorithm.
+In addition to that the cluster is then refined using the Lloyds' algorithm for a number of iterations given in input by the user in the command line.
+The number of clusters we want to compute is also given in input by the user.
+
+**Solution:** [Homework 3](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM3.java)
+
