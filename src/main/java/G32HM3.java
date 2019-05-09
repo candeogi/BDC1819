@@ -123,7 +123,6 @@ public class G32HM3 {
         //we want to apply "iter" iterations of Lloyds' algorithm to get better centers
 
         //C is an "arraylist" that stores the list of centers computed in every iteration of Lloyds' alg.
-        //C1 = C(0) and so on ...
         ArrayList<ArrayList<Vector>> C = new ArrayList<>();
         C.add(C1);
 
