@@ -127,7 +127,8 @@ public class G32HM3 {
         ArrayList<ArrayList<Vector>> C = new ArrayList<>();
         C.add(C1);
 
-        //only a number of iteration equal to "iter" parameter
+        /* Lloyds' algorithm */
+
         double minObjFuncValue = Double.MAX_VALUE;
         for(int j = 0; j < iter; j++){
             ArrayList<ArrayList<Vector>> partition = Partition(P, C.get(j));
