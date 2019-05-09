@@ -189,8 +189,11 @@ public class G32HM3 {
     }
 
     /**
+     * The name of the function is kmeans as requested on the homework assignment but in fact should be kmedian.
+     *
      * Receives in input a set of points P and a set of centers C,
      * and returns the average distance of a point of P from C
+     *
      * @param p
      * @param c
      * @return average distance
