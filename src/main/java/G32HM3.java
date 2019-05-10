@@ -80,8 +80,8 @@ public class G32HM3 {
         //set of centers
         ArrayList<Vector> C1 = new ArrayList<>();
 
+        //an Hashmap is used to store and access the weights related to distinct vectors
         HashMap<Vector,Long> weightsOfP = new HashMap<>();
-        HashMap<Vector,Double> distancesOfP = new HashMap<>();
 
         //initialize the hash map containing P and its weights
         for(int i = 0; i<P.size(); i++){
@@ -95,6 +95,10 @@ public class G32HM3 {
 
         //choose k-1 remaining centers with probability based on its weight and distance
         for(int i = 2; i <=k; i++){
+
+            //an Hashmap is used to store the distance of a point related to its closest center
+            //this Hashmap is updated every iteration
+            HashMap<Vector,Double> distancesOfP = new HashMap<>();
 
             //random number between 0 and 1
             double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
@@ -171,8 +175,7 @@ public class G32HM3 {
                 C.add(newCenters);
             }
             else{
-                //the obj function doesnt get better, exit the lloyds iterations.
-                //if you want to remove this feature just comment the break command
+                //the obj function is not decreasing, exit the lloyds iterations.
                 System.out.println("Lloyd's ended earlier ---> Optimal obj function found in iteration n."+ j);
                 break;
             }
@@ -208,6 +211,11 @@ public class G32HM3 {
 
     /**
      * Partition primitive
+     *
+     * A cluster is represented by an arraylist of points.
+     * All clusters are stored into another arraylist.
+     * The arraylist containing all clusters are returned.
+     *
      * @param P pointset
      * @param S set of k-selected centers
      * @return k-clustering of P
@@ -240,9 +248,10 @@ public class G32HM3 {
 
     /**
      * Compute the distance between a point and the closest center.
+     *
      * @param vector point for which we want to calculate the distance
      * @param S set of centers
-     * @return minDistance the distance to the cloesest center
+     * @return minDistance the distance to the closest center
      */
     private static double distance(Vector vector, ArrayList<Vector> S) {
         double minDistance = Double.MAX_VALUE;
