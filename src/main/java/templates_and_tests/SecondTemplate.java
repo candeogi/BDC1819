@@ -1,3 +1,4 @@
+package templates_and_tests;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -29,7 +30,7 @@ public class SecondTemplate {
         }
 
         SparkConf conf=new SparkConf(true)
-                .setAppName("SecondTemplate")
+                .setAppName("templates_and_tests.SecondTemplate")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
@@ -40,7 +41,7 @@ public class SecondTemplate {
 
         /*
         JavaPairRDD<String, Long> wordcountpairs =
-                docs.mapToPair(SecondTemplate::WordCountTest).groupByKey().mapValues(SecondTemplate::ReduceFunction);
+                docs.mapToPair(templates_and_tests.SecondTemplate::templates_and_tests.WordCountTest).groupByKey().mapValues(templates_and_tests.SecondTemplate::ReduceFunction);
          */
 
         JavaPairRDD<String, Long> wordcountpairs = docs
@@ -83,7 +84,7 @@ public class SecondTemplate {
 
 
     /*
-    private static <String, Long> Tuple2<String, Long> WordCountTest(String document) {
+    private static <String, Long> Tuple2<String, Long> templates_and_tests.WordCountTest(String document) {
         String[] tokens = (String[]) document.toString().split(" ");
         HashMap<String, Long> counts = new HashMap<>();
         ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();

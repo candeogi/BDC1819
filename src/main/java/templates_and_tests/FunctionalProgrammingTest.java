@@ -1,3 +1,5 @@
+package templates_and_tests;
+
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;

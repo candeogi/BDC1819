@@ -1,3 +1,5 @@
+package homework1;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -61,7 +63,7 @@ public class G32HM1 {
 
         //setup spark local
         //setMaster("local") can be added if not set on vm options
-        SparkConf configuration = new SparkConf(true).setAppName("G32HM1");
+        SparkConf configuration = new SparkConf(true).setAppName("homework1.G32HM1");
 
         JavaSparkContext sparkContext = new JavaSparkContext(configuration);
 

@@ -1,3 +1,5 @@
+package templates_and_tests;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -6,17 +8,13 @@ import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * WordCount2
- * version 1
+ * templates_and_tests.WordCount1
+ * flatmaptopair -> reducebykey
  * @author Giovanni Candeo
  */
-public class WordCount2_1_2 {
-
-    private static long docWordOccurrences = 3503570;
-    private static int k = 0;
+public class WordCount1 {
 
     public static void waitabit(){
         System.out.println("press enter to finish the program");
@@ -34,7 +32,7 @@ public class WordCount2_1_2 {
         }
 
         SparkConf conf=new SparkConf(true)
-                .setAppName("WordCount2")
+                .setAppName("templates_and_tests.WordCountTest")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
@@ -44,25 +42,26 @@ public class WordCount2_1_2 {
         // #words 3503570
 
         //RDD contains 10122 docs composed by a single line of numerous strings
-        JavaRDD<String> collection = sc.textFile(args[0]).cache();
-        System.out.println("Test count: "+collection.count());
-
+        JavaRDD<String> document = sc.textFile(args[0]).cache();
+        System.out.println("Test count: "+document.count());
         //number of partitions K, received as an input in the command line
-        k = Integer.parseInt(args[1]);
-        collection.repartition(k);
+        int k = Integer.parseInt(args[1]);
 
-        //lets start measuring time from here
+        //-------------TIME MEASURE START ------------------
         long start = System.currentTimeMillis();
 
-        List<String> collectcollection = collection.collect();
+        JavaPairRDD<String,Long> dWordCountPairs =document
+                .repartition(k)
+                .flatMapToPair(WordCount1::countSingleWordsFromString)
+                .reduceByKey(Long::sum);
 
-        JavaPairRDD<String, Long> singleWordsRDD = collection.flatMapToPair(WordCount2_1_2::countSingleWordsFromString);
-        JavaPairRDD<Integer, Iterable<Tuple2<String, Long>>> subsetByKey = singleWordsRDD.groupBy(WordCount2_1_2::assignRandomKey);
-        //fine map phase 1
-        List<Tuple2<Integer, Iterable<Tuple2<String, Long>>>> collect = subsetByKey.collect();
-        waitabit();
+        //i need this for computing the actual RDD transformation
+        dWordCountPairs.cache();
+        dWordCountPairs.count();
 
-        //end of time measuring
+        //waitabit();
+
+        //-------------TIME MEASURE END --------------------
         long end = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (end - start) + " ms");
 
@@ -82,11 +81,6 @@ public class WordCount2_1_2 {
         printWriter.close();
         */
     }
-    
-
-    private static int assignRandomKey(Tuple2<String, Long> stringLongTuple2) {
-        return ThreadLocalRandom.current().nextInt(0, (int) Math.sqrt(k));
-    }
 
     private static Iterator<Tuple2<String,Long>> countSingleWordsFromString(String documentsPartition) {
         String[] tokens = documentsPartition.split(" ");
@@ -97,20 +91,6 @@ public class WordCount2_1_2 {
         }
         for (Map.Entry<String, Long> e : counts.entrySet()) {
             pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-        }
-        return pairs.iterator();
-    }
-
-    private static Iterator<Tuple2<String,Long>> countSingleWords(List<String> documentsPartition) {
-        HashMap<String,Long> counts = new HashMap<>();
-        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-        for(String partitionDoc : documentsPartition){
-            for(String token : partitionDoc.split(" ")) {
-                counts.put(token, 1L + counts.getOrDefault(token, 0L));
-            }
-        }
-        for(Map.Entry<String,Long> e: counts.entrySet()){
-            pairs.add(new Tuple2<>(e.getKey(),e.getValue()));
         }
         return pairs.iterator();
     }

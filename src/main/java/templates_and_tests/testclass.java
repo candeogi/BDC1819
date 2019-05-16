@@ -1,3 +1,5 @@
+package templates_and_tests;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -12,16 +14,16 @@ public class testclass {
     public static void main(String[] args) {
 
         SparkConf conf = new SparkConf(true)
-                .setAppName("testclass")
+                .setAppName("templates_and_tests.testclass")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaRDD<String> collection = sc.textFile(args[0]);
             /*
         JavaRDD<String> repartition = collection.repartition(k);
-        JavaPairRDD<String, Long> stringLongJavaPairRDD = repartition.flatMapToPair(testclass::testfunction);
+        JavaPairRDD<String, Long> stringLongJavaPairRDD = repartition.flatMapToPair(templates_and_tests.testclass::testfunction);
         JavaPairRDD<Long, Iterable<Tuple2<String, Long>>> longIterableJavaPairRDD = stringLongJavaPairRDD.groupBy((w) -> ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k)));
-        JavaPairRDD<String, Long> asdasdasd = longIterableJavaPairRDD.flatMapToPair(testclass::testtest);
+        JavaPairRDD<String, Long> asdasdasd = longIterableJavaPairRDD.flatMapToPair(templates_and_tests.testclass::testtest);
         JavaPairRDD<String, Long> stringLongJavaPairRDD1 = asdasdasd.reduceByKey(Long::sum);
 */
         JavaPairRDD<String,Long> finalwordcount = collection.repartition(k)

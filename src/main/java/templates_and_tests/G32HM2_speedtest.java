@@ -1,3 +1,5 @@
+package templates_and_tests;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -7,10 +9,7 @@ import scala.Tuple2;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -26,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Nicolo Levorato 1156744
  *
  */
-public class G32HM2 {
+public class G32HM2_speedtest {
 
     //number of partitions
     private static int k = 0;
@@ -43,7 +42,7 @@ public class G32HM2 {
         }
 
         SparkConf conf = new SparkConf(true)
-                .setAppName("G32HM2")
+                .setAppName("homework2.G32HM2")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
@@ -66,7 +65,7 @@ public class G32HM2 {
         start = System.currentTimeMillis();
 
         JavaPairRDD<String,Long> dWordCount1Pairs =collectionRepartitioned
-                .flatMapToPair(G32HM2::countSingleWordsFromString)
+                .flatMapToPair(G32HM2_speedtest::countSingleWordsFromString)
                 .reduceByKey(Long::sum);
 
         //i need this for computing the actual RDD transformation
@@ -80,9 +79,9 @@ public class G32HM2 {
         start = System.currentTimeMillis();
 
         JavaPairRDD<String, Long> dWordCount2Pairs =collectionRepartitioned
-                .flatMapToPair(G32HM2::countSingleWordsFromString)
-                .groupBy(G32HM2::assignRandomKey)
-                .flatMapToPair(G32HM2::aggregateWCperKeySubset)
+                .flatMapToPair(G32HM2_speedtest::countSingleWordsFromString)
+                .groupBy(G32HM2_speedtest::assignRandomKey)
+                .flatMapToPair(G32HM2_speedtest::aggregateWCperKeySubset)
                 .reduceByKey(Long::sum);
 
         dWordCount2Pairs.cache().count();
@@ -95,7 +94,7 @@ public class G32HM2 {
         start = System.currentTimeMillis();
 
         JavaPairRDD<String, Long> dWordCount2Pairs2 =  collectionRepartitioned
-                .mapPartitionsToPair(G32HM2::wordCountInPartition2)
+                .mapPartitionsToPair(G32HM2_speedtest::wordCountInPartition2)
                 .reduceByKey(Long::sum);
 
         dWordCount2Pairs2.cache().count();
@@ -113,13 +112,10 @@ public class G32HM2 {
         printWordCount(dWordCount2Pairs2,"wc2_2output.txt");
         */
 
-        /* Compute the average length of the distinct words appearing in the documents */
+        /* Prints the average length of the distinct words appearing in the documents */
         long numberOfWoccurrences = dWordCount2Pairs2.count();
-        long entireWordLength = dWordCount2Pairs2.map((x) -> (long) x._1().length()).reduce(Long::sum);
+        long entireWordLength = dWordCount2Pairs2.map((x) -> Long.valueOf(x._1().length())).reduce(Long::sum);
         float averageLenghtOfDistW = (float) entireWordLength / numberOfWoccurrences;
-
-        /* Print the results */
-        System.out.println("Document: "+args[0]+"\nPartitions: "+k);
         System.out.printf("Average length of the distinct words in the collection: %f characters\n", averageLenghtOfDistW);
 
         /* Print the time speed test */
@@ -129,6 +125,25 @@ public class G32HM2 {
                 "Improved count 2.1: "+speedTest.get(1)+" ms\n" +
                 "Improved count 2.2: "+speedTest.get(2)+" ms\n" +
                 "----------------------------------------");
+    }
+
+    /**
+     * This function receives a subset and and count the words in that subset.
+     *
+     * @param subsetbykey a subset of keys
+     * @return word count in the subset
+     */
+    private static Iterator<Tuple2<String,Long>> aggregateWCperKeySubset(Tuple2<Long, Iterable<Tuple2<String, Long>>> subsetbykey) {
+        Iterable<Tuple2<String, Long>> tuple2s = subsetbykey._2();
+        HashMap<String,Long> count = new HashMap<>();
+        for(Tuple2<String,Long> singolaCoppia : tuple2s){
+            count.merge(singolaCoppia._1(),singolaCoppia._2(),Long::sum);
+        }
+        ArrayList<Tuple2<String,Long>> pairs= new ArrayList<>();
+        for(Map.Entry<String, Long> e : count.entrySet()){
+            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+        }
+        return pairs.iterator();
     }
 
     /**
@@ -142,7 +157,7 @@ public class G32HM2 {
         HashMap<String, Long> wordCountInDocument = new HashMap<>();
         ArrayList<Tuple2<String, Long>> wcPairs = new ArrayList<>();
         for (String token : tokens) {
-            wordCountInDocument.merge(token,1L,Long::sum);
+            wordCountInDocument.put(token, 1L + wordCountInDocument .getOrDefault(token, 0L));
         }
         for (Map.Entry<String, Long> e : wordCountInDocument .entrySet()) {
             wcPairs.add(new Tuple2<>(e.getKey(), e.getValue()));
@@ -152,30 +167,14 @@ public class G32HM2 {
 
     /**
      * Assigns a random key to the input document s
-     * @param s input word count    pairs
+     * @param s input document s
      * @return random Long value that will represent a random key.
      */
-    private static Long assignRandomKey(Tuple2<String,Long> s){
+    private static Long assignRandomKey(String s) {
         return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
-
-    /**
-     * This function receives a subset and and count the words in that subset.
-     *
-     * @param subsetByKey a subset of keys
-     * @return word count in the subset
-     */
-    private static Iterator<Tuple2<String,Long>> aggregateWCperKeySubset(Tuple2<Long, Iterable<Tuple2<String, Long>>> subsetByKey) {
-        Iterable<Tuple2<String, Long>> tuple2s = subsetByKey._2();
-        HashMap<String,Long> count = new HashMap<>();
-        for(Tuple2<String,Long> wordCountTuple : tuple2s){
-            count.merge(wordCountTuple._1(),wordCountTuple._2(),Long::sum);
-        }
-        ArrayList<Tuple2<String,Long>> pairs= new ArrayList<>();
-        for(Map.Entry<String, Long> e : count.entrySet()){
-            pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-        }
-        return pairs.iterator();
+    private static Long assignRandomKey(Tuple2<String,Long> s){
+        return ThreadLocalRandom.current().nextLong(0, (int) Math.sqrt(k));
     }
 
 
@@ -191,14 +190,20 @@ public class G32HM2 {
         //i need this to return a correct iterator
         ArrayList<Tuple2<String,Long>> wordCountIterator = new ArrayList<>();
 
-        //for each document of the partition i count the word occurrences and update the total word count
+        //per ogni documento della partizione conto le occorrenze di parole e aggiorno a fine ciclo il conteggio principale
         while(documentsPartitioned.hasNext()){
+            HashMap<String,Long> wordCountInDocument = new HashMap<>();
             String[] tokens = documentsPartitioned.next().split(" ");
             //count word occurrences in document
             for(String token : tokens){
-                wordCountInPartition.merge(token,1L,Long::sum);
+                wordCountInDocument.merge(token,1L,Long::sum);
+            }
+            //document has been wordcounted, time to update the main value
+            for (Map.Entry<String, Long> e : wordCountInDocument.entrySet()) {
+                wordCountInPartition.merge(e.getKey(),e.getValue(),Long::sum);
             }
         }
+
         for (Map.Entry<String, Long> e : wordCountInPartition.entrySet()) {
             wordCountIterator.add(new Tuple2<>(e.getKey(), e.getValue()));
         }

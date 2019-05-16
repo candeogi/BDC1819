@@ -1,3 +1,5 @@
+package templates_and_tests;
+
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 

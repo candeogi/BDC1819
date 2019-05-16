@@ -1,3 +1,4 @@
+package templates_and_tests;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -7,8 +8,8 @@ import scala.Tuple2;
 import java.util.*;
 
 /**
- * This class is a remake of the SecondTemplate file provided from the homework 2.
- * The class implement a word count algorithm as in the SecondTemplate but uses methods instead of lambda functions.
+ * This class is a remake of the templates_and_tests.SecondTemplate file provided from the homework 2.
+ * The class implement a word count algorithm as in the templates_and_tests.SecondTemplate but uses methods instead of lambda functions.
  * Also makes a time measurement of the time needed for the algorithm to complete.
  * @author Giovanni Candeo
  */
@@ -20,7 +21,7 @@ public class WordCountTest {
         }
 
         SparkConf conf=new SparkConf(true)
-                .setAppName("WordCountTest")
+                .setAppName("templates_and_tests.WordCountTest")
                 .setMaster("local[*]");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
@@ -36,7 +37,7 @@ public class WordCountTest {
         //lets start measuring time from here
         long start = System.currentTimeMillis();
 
-        //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(WordCountTest::countSingleWords);
+        //Iterator<Tuple2<String, Long>> countForSingleWord = document.flatMapToPair(templates_and_tests.WordCountTest::countSingleWords);
         JavaPairRDD<String,Long> dWordCountPairs = document
                 .flatMapToPair(WordCountTest::countSingleWords)
                 .groupByKey()

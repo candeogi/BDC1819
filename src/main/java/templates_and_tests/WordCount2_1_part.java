@@ -1,9 +1,9 @@
+package templates_and_tests;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.execution.columnar.LONG;
-import org.codehaus.janino.Java;
 import scala.Tuple2;
 
 import java.io.IOException;

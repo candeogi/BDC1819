@@ -1,8 +1,8 @@
 # BDC1819
 Repository for Big Data Computing Course
-* [Homework 1](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM1.java)
-* [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM2.java)
-* [Homework 3](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM3.java)
+* [Homework 1](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework1.G32HM1.java)
+* [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework2.G32HM2.java)
+* [Homework 3](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework3.G32HM3.java)
 * ...
 ___
 
@@ -17,7 +17,7 @@ After doing the preliminary set up of your machine as explained above, create a 
 3. Creates a new RDD dNormalized containing the values of dNumbers normalized in [0,1].
 4. Computes and prints a statistics of your choice on dNormalized. Make sure that you use at least one new method provided by the RDD interface. 
 
-**Solution:** [Homework 1](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM1.java)  
+**Solution:** [Homework 1](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework1.G32HM1.java)  
 ___
 ### Homework 2
 **Assigment**  
@@ -36,7 +36,7 @@ Create a program GxxHM2.java (for Java users) or GxxHM2.py (for Python users), w
 
 Try to make each version as fast as possible. You can test you program using as input the file text-sample.txt, which contains 10122 documents from Wikipedia (one document per line) with 3503570 word occurrences overall. 
 
-**Solution:** [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM2.java)
+**Solution:** [Homework 2](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework2.G32HM2.java)
 ___
 ### Homework 3
 **Assigment**  
@@ -44,5 +44,5 @@ Create a program that reads an input dataset of points in a metric space and com
 In addition to that the cluster is then refined using the Lloyds' algorithm for a number of iterations given in input by the user in the command line.
 The number of clusters we want to compute is also given in input by the user.
 
-**Solution:** [Homework 3](https://github.com/candeogi/BDC1819/blob/master/src/main/java/G32HM3.java)
+**Solution:** [Homework 3](https://github.com/candeogi/BDC1819/blob/master/src/main/java/homework3.G32HM3.java)
 
