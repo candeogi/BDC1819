@@ -3,18 +3,17 @@ package homework4;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaDoubleRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.sql.execution.columnar.DOUBLE;
 import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.spark.mllib.linalg.Vectors.zeros;
@@ -66,6 +65,7 @@ public class G32HM4
                 .repartition(L)
                 .cache();
         long N = pointset.count();
+        System.out.println("");
         System.out.println("Number of points is : " + N);
         System.out.println("Number of clusters is : " + k);
         System.out.println("Number of parts is : " + L);
@@ -78,11 +78,15 @@ public class G32HM4
 
     public static Double MR_kmedian(JavaRDD<Vector> pointset, int k, int L, int iter)
     {
-        //
-        // --- ADD INSTRUCTIONS TO TAKE AND PRINT TIMES OF ROUNDS 1, 2 and 3 
-        //
+        // INSTRUCTIONS TO TAKE AND PRINT TIMES OF ROUNDS 1, 2 and 3
+        ArrayList<Long> speedTest = new ArrayList<>();
+        long start;
+        long end;
 
+        pointset.cache().count();
         //------------- ROUND 1 ---------------------------
+        start = System.currentTimeMillis();
+
         JavaRDD<Tuple2<Vector,Long>> coreset = pointset.mapPartitions(x ->
         {
             ArrayList<Vector> points = new ArrayList<>();
@@ -103,7 +107,13 @@ public class G32HM4
             return c_w.iterator();
         });
 
+        coreset.cache().count();
+        end = System.currentTimeMillis();
+        speedTest.add(end-start);
+
         //------------- ROUND 2 ---------------------------
+
+        start = System.currentTimeMillis();
 
         ArrayList<Tuple2<Vector, Long>> elems = new ArrayList<>(k*L);
         elems.addAll(coreset.collect());
@@ -117,11 +127,27 @@ public class G32HM4
 
         ArrayList<Vector> centers = kmeansPP(coresetPoints, weights, k, iter);
 
+        end = System.currentTimeMillis();
+        speedTest.add(end-start);
         //------------- ROUND 3: COMPUTE OBJ FUNCTION --------------------
-        //
-        //------------- ADD YOUR CODE HERE--------------------------------
-        //
-        return 1.0;
+        start = System.currentTimeMillis();
+
+        double objFuncValue = kmeansObj(pointset, centers);
+
+        end = System.currentTimeMillis();
+        speedTest.add(end-start);
+
+        long totalTime = speedTest.get(0) + speedTest.get(1) + speedTest.get(2);
+        /* Print the time speed test */
+        System.out.println("" +
+                "\n------ Round time measurement ------\n" +
+                "Round 1: "+speedTest.get(0)+" ms\n" +
+                "Round 2: "+speedTest.get(1)+" ms\n" +
+                "Round 3: "+speedTest.get(2)+" ms\n" +
+                "Total: "+totalTime+" ms\n" +
+                "----------------------------------------\n");
+
+        return objFuncValue;
     }
 
 
@@ -238,13 +264,20 @@ public class G32HM4
 
         double minObjFuncValue = Double.MAX_VALUE;
         for(int j = 0; j < iter; j++){
+            System.out.println("Lloyd iteration= "+j);
             ArrayList<ArrayList<Vector>> partition = Partition(P, C.get(j));
             ArrayList<Vector> newCenters = new ArrayList<>();
 
+            System.out.println("partition = "+partition);
+            for(ArrayList<Vector> oneCluster : partition){
+                System.out.println(oneCluster);
+            }
+            System.out.println("---for interno---");
             //compute the centroid for each partition
             for(int i = 0; i < partition.size(); i++){
+                System.out.println("i= "+i);
                 ArrayList<Vector> cluster = partition.get(i);
-
+                System.out.println("cluster= "+cluster);
                 //initialize the centroid
                 Vector initPoint = cluster.get(0);
                 Vector centroid = zeros(initPoint.size());
@@ -296,8 +329,21 @@ public class G32HM4
     }
 
     /**
-     * The name of the function is kmeans as requested on the homework assignment but in fact should be kmedian.
      *
+     * Receives in input a set of points P and a set of centers C,
+     * and returns the average distance of a point of P from C
+     *
+     * @param pointset RDD of vectors
+     * @param centers arraylist of vectors
+     * @return average distance
+     */
+    private static double kmeansObj(JavaRDD<Vector> pointset, ArrayList<Vector> centers) {
+        Long sizeOfP = pointset.count();
+        Double sumOfDistances = pointset.map(x -> distance(x, centers)).reduce(Double::sum);
+        return sumOfDistances/sizeOfP;
+    }
+
+    /**
      * Receives in input a set of points P and a set of centers C,
      * and returns the average distance of a point of P from C
      *
@@ -367,5 +413,6 @@ public class G32HM4
         }
         return minDistance;
     }
+
 
 }

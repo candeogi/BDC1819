@@ -50,12 +50,17 @@ public class G32HM3 {
         System.out.println("Centers: "+k);
         System.out.println("Iterations: "+iter);
 
+        long start = System.currentTimeMillis();
+
         //runs kmeansPP with weights equal to 1
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
 
         //compute the average distance between points and centers
         double avgDistance = kmeansObj(P,C);
+        long end = System.currentTimeMillis();
+
         System.out.println("average distance = "+avgDistance);
+        System.out.println("total time = "+(end-start));
     }
 
 
