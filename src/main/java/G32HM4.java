@@ -7,6 +7,7 @@ import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.sql.execution.columnar.DOUBLE;
+import scala.Array;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static org.apache.spark.mllib.linalg.Vectors.parse;
 import static org.apache.spark.mllib.linalg.Vectors.zeros;
 
 public class G32HM4
@@ -260,22 +262,26 @@ public class G32HM4
 
         /* Lloyds' algorithm */
 
-        double minObjFuncValue = Double.MAX_VALUE;
         for(int j = 0; j < iter; j++){
             System.out.println("Lloyd iteration= "+j);
             ArrayList<ArrayList<Vector>> partition = Partition(P, C.get(j));
             ArrayList<Vector> newCenters = new ArrayList<>();
-
+            System.out.println("---------------------");
+            System.out.println("centers = "+C.get(j));
+            for(Vector center : C.get(j)){
+                System.out.println(center);
+            }
+            System.out.println("---------------------");
             System.out.println("partition = "+partition);
             for(ArrayList<Vector> oneCluster : partition){
                 System.out.println(oneCluster);
             }
-            System.out.println("---for interno---");
+            System.out.println("---------------------");
             //compute the centroid for each partition
             for(int i = 0; i < partition.size(); i++){
-                System.out.println("i= "+i);
+
                 ArrayList<Vector> cluster = partition.get(i);
-                System.out.println("cluster= "+cluster);
+
                 //initialize the centroid
                 Vector initPoint = cluster.get(0);
                 Vector centroid = zeros(initPoint.size());
@@ -301,19 +307,7 @@ public class G32HM4
                 newCenters.add(newCenter);
             }
 
-            //check if the objective function is decreasing
-            double newObjFuncValue = kmeansObj(P, newCenters);
-
-            //continues the lloyds' iteration only if its decreasing
-            if(newObjFuncValue<minObjFuncValue){
-                minObjFuncValue = newObjFuncValue;
-                C.add(newCenters);
-            }
-            else{
-                //the obj function is not decreasing, exit the lloyds iterations.
-                System.out.println("Lloyd's ended earlier ---> Optimal obj function found in iteration n."+ j);
-                break;
-            }
+            C.add(newCenters);
         }
 
         /*
@@ -376,20 +370,31 @@ public class G32HM4
             //create a cluster for each center in S
             clusters.add(new ArrayList<>());
         }
+
+        ArrayList<Boolean> test123=new ArrayList<>();
+        for(int i = 0; i < k; i++){
+            test123.add(false);
+        }
+
         for(Vector p : P){
-            double minDistance = Double.MAX_VALUE;
-            int l =0;
+            double minDistance = distance(p,S);
+            int closestCenterIndex=-1;
             //lets find at which centers p belongs
             for(int i = 0; i < k; i++){
                 double distance = Math.sqrt(Vectors.sqdist(p, S.get(i)));
-                if(distance < minDistance){
-                    minDistance = distance;
-                    l = i;
+                if(distance == minDistance){
+                    closestCenterIndex = i;
                 }
             }
+            if (closestCenterIndex==-1){
+                closestCenterIndex=0;
+            }
             //the point P belongs to the cluster l
-            clusters.get(l).add(p);
+            clusters.get(closestCenterIndex).add(p);
+            test123.set(closestCenterIndex,true);
+            System.out.println(closestCenterIndex+" <- "+p);
         }
+        System.out.println(test123);
         return clusters;
     }
 
@@ -402,7 +407,7 @@ public class G32HM4
      * @return minDistance the distance to the closest center
      */
     private static double distance(Vector vector, ArrayList<Vector> S) {
-        double minDistance = Double.MAX_VALUE;
+        double minDistance = Double.POSITIVE_INFINITY;
         for(Vector center: S){
             double distance = Math.sqrt(Vectors.sqdist(vector,center));
             if(distance < minDistance){
