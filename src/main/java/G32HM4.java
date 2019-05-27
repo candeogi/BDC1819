@@ -6,8 +6,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.BLAS;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.sql.execution.columnar.DOUBLE;
-import scala.Array;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.apache.spark.mllib.linalg.Vectors.parse;
 import static org.apache.spark.mllib.linalg.Vectors.zeros;
 
 public class G32HM4
@@ -132,7 +129,7 @@ public class G32HM4
         //------------- ROUND 3: COMPUTE OBJ FUNCTION --------------------
         start = System.currentTimeMillis();
 
-        double objFuncValue = kmeansObj(pointset, centers);
+        double objFuncValue = kmediansObj(pointset, centers);
 
         end = System.currentTimeMillis();
         speedTest.add(end-start);
@@ -183,7 +180,7 @@ public class G32HM4
         return Vectors.dense(data);
     }
 
-    // Euclidean distance
+    // Euclidean minDistance
     public static double euclidean(Vector a, Vector b) {
         return Math.sqrt(Vectors.sqdist(a, b));
     }
@@ -194,7 +191,7 @@ public class G32HM4
      * Compute a first set C' of centers using the weighted variant of the kmeans++
      * In each iteration the probability for a non-center point p of being chosen as next center is:
      * w_p*(d_p)/(sum_{q non center} w_q*(d_q))
-     * where d_p is the distance of p from the closest among the already selected centers and w_p is the weight of p.
+     * where d_p is the minDistance of p from the closest among the already selected centers and w_p is the weight of p.
      *
      * Then it applies the Lloyds' algorithm for up to an "iter" number of iterations or until it reaches a minimum
      * value of the objective function
@@ -223,24 +220,27 @@ public class G32HM4
         Vector randomPoint = P.get(randomNum);
         C1.add(randomPoint);
 
-        //choose k-1 remaining centers with probability based on its weight and distance
-        for(int i = 2; i <=k; i++){
+        //an Hashmap is used to store the minDistance of a point related to its closest center
+        HashMap<Vector,Double> distancesOfP = new HashMap<>();
 
-            //an Hashmap is used to store the distance of a point related to its closest center
-            //this Hashmap is updated every iteration
-            HashMap<Vector,Double> distancesOfP = new HashMap<>();
+        //initialize the distances with the first center picked randomly
+        for(Vector currentVector: P){
+            distancesOfP.put(currentVector, euclidean(currentVector,randomPoint));
+        }
+
+        //choose k-1 remaining centers with probability based on its weight and minDistance
+        for(int i = 2; i <=k; i++){
 
             //random number between 0 and 1
             double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
 
-            //compute the distances of the points from the centers
+            //compute the sum of distances
             double sumOfDistances=0;
             for(Vector currentVector : P){
-                distancesOfP.put(currentVector, distance(currentVector,C1));
                 sumOfDistances =  sumOfDistances + distancesOfP.get(currentVector)*weightsOfP.get(currentVector);
             }
 
-            //pick the new next center with probability based on its weight and distance
+            //pick the new next center with probability based on its weight and minDistance
             double currentRange = 0;
             Vector probFarthestPoint = P.get(0);
             for(Vector currentVector : P){
@@ -252,6 +252,14 @@ public class G32HM4
                 }
             }
             C1.add(probFarthestPoint);
+
+            //update the min distances between points and new center
+            for(Vector currentVector : P){
+                double newDistance  = euclidean(currentVector,probFarthestPoint);
+                if(newDistance<distancesOfP.get(currentVector)){
+                    distancesOfP.put(currentVector,newDistance);
+                }
+            }
         }
         //C1 now contains the centers
         //we want to apply "iter" iterations of Lloyds' algorithm to get better centers
@@ -308,13 +316,12 @@ public class G32HM4
             }
 
             C.add(newCenters);
+            System.out.println("newcenters");
+            for(Vector center : newCenters){
+                System.out.println(center);
+            }
+            System.out.println("--------------------------");
         }
-
-        /*
-        for(int i = 0; i<C.size();i++){
-            System.out.println("C("+i+") is: "+C.get(i));
-            System.out.println("avg distance: "+kmeansObj(P,C.get(i)));
-        }*/
 
         //return the last optimal set of centers
         return C.get(C.size()-1);
@@ -323,32 +330,16 @@ public class G32HM4
     /**
      *
      * Receives in input a set of points P and a set of centers C,
-     * and returns the average distance of a point of P from C
+     * and returns the average minDistance of a point of P from C
      *
      * @param pointset RDD of vectors
      * @param centers arraylist of vectors
-     * @return average distance
+     * @return average minDistance
      */
-    private static double kmeansObj(JavaRDD<Vector> pointset, ArrayList<Vector> centers) {
+    private static double kmediansObj(JavaRDD<Vector> pointset, ArrayList<Vector> centers) {
         Long sizeOfP = pointset.count();
-        Double sumOfDistances = pointset.map(x -> distance(x, centers)).reduce(Double::sum);
+        Double sumOfDistances = pointset.map(x -> minDistance(x, centers)).reduce(Double::sum);
         return sumOfDistances/sizeOfP;
-    }
-
-    /**
-     * Receives in input a set of points P and a set of centers C,
-     * and returns the average distance of a point of P from C
-     *
-     * @param p
-     * @param c
-     * @return average distance
-     */
-    private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
-        double sumDistance = 0;
-        for(int i=0;i<p.size();i++){
-            sumDistance = sumDistance + distance(p.get(i),c);
-        }
-        return sumDistance/p.size();
     }
 
     /**
@@ -377,7 +368,7 @@ public class G32HM4
         }
 
         for(Vector p : P){
-            double minDistance = distance(p,S);
+            double minDistance = minDistance(p,S);
             int closestCenterIndex=-1;
             //lets find at which centers p belongs
             for(int i = 0; i < k; i++){
@@ -400,13 +391,13 @@ public class G32HM4
 
 
     /**
-     * Compute the distance between a point and the closest center.
+     * Compute the minDistance between a point and the closest center.
      *
-     * @param vector point for which we want to calculate the distance
+     * @param vector point for which we want to calculate the minDistance
      * @param S set of centers
-     * @return minDistance the distance to the closest center
+     * @return minDistance the minDistance to the closest center
      */
-    private static double distance(Vector vector, ArrayList<Vector> S) {
+    private static double minDistance(Vector vector, ArrayList<Vector> S) {
         double minDistance = Double.POSITIVE_INFINITY;
         for(Vector center: S){
             double distance = Math.sqrt(Vectors.sqdist(vector,center));

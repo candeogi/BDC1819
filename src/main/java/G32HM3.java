@@ -53,11 +53,11 @@ public class G32HM3 {
         //runs kmeansPP with weights equal to 1
         ArrayList<Vector> C = kmeansPP(P, myWeights, k, iter);
 
-        //compute the average distance between points and centers
+        //compute the average minDistance between points and centers
         double avgDistance = kmeansObj(P,C);
         long end = System.currentTimeMillis();
 
-        System.out.println("average distance = "+avgDistance);
+        System.out.println("average minDistance = "+avgDistance);
         System.out.println("total time = "+(end-start));
     }
 
@@ -69,7 +69,7 @@ public class G32HM3 {
      * Compute a first set C' of centers using the weighted variant of the kmeans++
      * In each iteration the probability for a non-center point p of being chosen as next center is:
      * w_p*(d_p)/(sum_{q non center} w_q*(d_q))
-     * where d_p is the distance of p from the closest among the already selected centers and w_p is the weight of p.
+     * where d_p is the minDistance of p from the closest among the already selected centers and w_p is the weight of p.
      *
      * Then it applies the Lloyds' algorithm for up to an "iter" number of iterations or until it reaches a minimum
      * value of the objective function
@@ -98,24 +98,27 @@ public class G32HM3 {
         Vector randomPoint = P.get(randomNum);
         C1.add(randomPoint);
 
-        //choose k-1 remaining centers with probability based on its weight and distance
-        for(int i = 2; i <=k; i++){
+        //an Hashmap is used to store the minDistance of a point related to its closest center
+        HashMap<Vector,Double> distancesOfP = new HashMap<>();
 
-            //an Hashmap is used to store the distance of a point related to its closest center
-            //this Hashmap is updated every iteration
-            HashMap<Vector,Double> distancesOfP = new HashMap<>();
+        //initialize the distances with the first center picked randomly
+        for(Vector currentVector: P){
+            distancesOfP.put(currentVector, euclidean(currentVector,randomPoint));
+        }
+
+        //choose k-1 remaining centers with probability based on its weight and minDistance
+        for(int i = 2; i <=k; i++){
 
             //random number between 0 and 1
             double randomPivot = ThreadLocalRandom.current().nextDouble(0, 1);
 
-            //compute the distances of the points from the centers
+            //compute the sum of distances
             double sumOfDistances=0;
             for(Vector currentVector : P){
-                distancesOfP.put(currentVector, distance(currentVector,C1));
                 sumOfDistances =  sumOfDistances + distancesOfP.get(currentVector)*weightsOfP.get(currentVector);
             }
 
-            //pick the new next center with probability based on its weight and distance
+            //pick the new next center with probability based on its weight and minDistance
             double currentRange = 0;
             Vector probFarthestPoint = P.get(0);
             for(Vector currentVector : P){
@@ -127,7 +130,16 @@ public class G32HM3 {
                 }
             }
             C1.add(probFarthestPoint);
+
+            //update the min distances between points and new center
+            for(Vector currentVector : P){
+                double newDistance  = euclidean(currentVector,probFarthestPoint);
+                if(newDistance<distancesOfP.get(currentVector)){
+                    distancesOfP.put(currentVector,newDistance);
+                }
+            }
         }
+
         //C1 now contains the centers
         //we want to apply "iter" iterations of Lloyds' algorithm to get better centers
 
@@ -189,7 +201,7 @@ public class G32HM3 {
         /*
         for(int i = 0; i<C.size();i++){
             System.out.println("C("+i+") is: "+C.get(i));
-            System.out.println("avg distance: "+kmeansObj(P,C.get(i)));
+            System.out.println("avg minDistance: "+kmeansObj(P,C.get(i)));
         }*/
 
         //return the last optimal set of centers
@@ -200,16 +212,16 @@ public class G32HM3 {
      * The name of the function is kmeans as requested on the homework assignment but in fact should be kmedian.
      *
      * Receives in input a set of points P and a set of centers C,
-     * and returns the average distance of a point of P from C
+     * and returns the average minDistance of a point of P from C
      *
      * @param p
      * @param c
-     * @return average distance
+     * @return average minDistance
      */
     private static double kmeansObj(ArrayList<Vector> p, ArrayList<Vector> c) {
         double sumDistance = 0;
         for(int i=0;i<p.size();i++){
-            sumDistance = sumDistance + distance(p.get(i),c);
+            sumDistance = sumDistance + minDistance(p.get(i),c);
         }
         return sumDistance/p.size();
     }
@@ -250,26 +262,34 @@ public class G32HM3 {
         return clusters;
     }
 
+    /**
+     * Euclidean minDistance between two vectors
+     *
+     * @param a vector
+     * @param b vector
+     * @return euclidean minDistance between two vectors
+     */
+    private static double euclidean(Vector a, Vector b) {
+        return Math.sqrt(Vectors.sqdist(a, b));
+    }
 
     /**
-     * Compute the distance between a point and the closest center.
+     * Compute the minDistance between a point and the closest center.
      *
-     * @param vector point for which we want to calculate the distance
+     * @param vector point for which we want to calculate the minDistance
      * @param S set of centers
-     * @return minDistance the distance to the closest center
+     * @return minDistance the minDistance to the closest center
      */
-    private static double distance(Vector vector, ArrayList<Vector> S) {
+    private static double minDistance(Vector vector, ArrayList<Vector> S) {
         double minDistance = Double.MAX_VALUE;
         for(Vector center: S){
-            double distance = Math.sqrt(Vectors.sqdist(vector,center));
+            double distance = euclidean(vector,center);
             if(distance < minDistance){
                 minDistance = distance;
             }
         }
         return minDistance;
     }
-
-
 
     /**
      * String to Vector
