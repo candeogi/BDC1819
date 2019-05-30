@@ -80,7 +80,6 @@ public class G32HM4
         long start;
         long end;
 
-        pointset.cache().count();
         //------------- ROUND 1 ---------------------------
         start = System.currentTimeMillis();
 
@@ -104,16 +103,21 @@ public class G32HM4
             return c_w.iterator();
         });
 
-        coreset.cache().count();
-        end = System.currentTimeMillis();
-        speedTest.add(end-start);
+        //we use the collect of round 2 for the time measurement
+        //coreset.cache().count();
 
         //------------- ROUND 2 ---------------------------
 
-        start = System.currentTimeMillis();
 
         ArrayList<Tuple2<Vector, Long>> elems = new ArrayList<>(k*L);
         elems.addAll(coreset.collect());
+
+        //"close time for round 1 after the collect to avoid another cache -> count
+        end = System.currentTimeMillis();
+        speedTest.add(end-start);
+
+        start = System.currentTimeMillis();
+
         ArrayList<Vector> coresetPoints = new ArrayList<>();
         ArrayList<Long> weights = new ArrayList<>();
         for(int i =0; i< elems.size(); ++i)
